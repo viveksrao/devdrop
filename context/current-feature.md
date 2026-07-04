@@ -2,11 +2,9 @@
 
 <!-- Feature name and short description -->
 
-Project setup and context documentation. No feature branch is in progress yet.
-
 ## Status
 
-Not Started
+<!-- Not Started | In Progress | Completed  -->
 
 ## Goals
 
@@ -24,3 +22,6 @@ Not Started
 - 2026-04-05 (`4a0a5cd`) - Bootstrap Your Files Manually
 - 2026-04-24 (`097b736`) - Project Context & CLAUDE.md
 - 2026-07-03 (`3fdb579`) - chore: Created Project Overview & Current Feature files for Context
+- 2026-07-03 (`6645594`) - docs: Update current-feature history with Next.js initial setup
+- 2026-07-04 (`10b6fd5`) - feat: Add mock data for dashboard UI
+- 2026-07-04 - Dashboard UI Phase 1 completed: ShadCN UI setup, /dashboard route, dark mode default, top bar (search + New item), sidebar/main placeholders (see @context/features/dashboard-phase-1-spec.md)
