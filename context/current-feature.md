@@ -2,9 +2,13 @@
 
 <!-- Feature name and short description -->
 
+_None - awaiting next feature_
+
 ## Status
 
 <!-- Not Started | In Progress | Completed  -->
+
+Not Started
 
 ## Goals
 
@@ -25,3 +29,4 @@
 - 2026-07-03 (`6645594`) - docs: Update current-feature history with Next.js initial setup
 - 2026-07-04 (`10b6fd5`) - feat: Add mock data for dashboard UI
 - 2026-07-04 - Dashboard UI Phase 1 completed: ShadCN UI setup, /dashboard route, dark mode default, top bar (search + New item), sidebar/main placeholders (see @context/features/dashboard-phase-1-spec.md)
+- 2026-07-04 - Dashboard UI Phase 2 completed: collapsible sidebar, types/collections links, favorite & recent collections, user avatar area, mobile drawer, logo moved from top bar into sidebar header (see @context/features/dashboard-phase-2-spec.md)
