@@ -1,0 +1,215 @@
+"use client";
+
+import Link from "next/link";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  Star,
+  Folder,
+  Layers,
+  Puzzle,
+  type LucideIcon,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
+import { collections, itemTypes, currentUser } from "@/lib/mock-data";
+import {
+  ITEM_TYPE_ICONS,
+  ITEM_TYPE_LABELS,
+  PRO_ONLY_TYPES,
+} from "@/lib/constants/item-types";
+
+const RECENT_COLLECTIONS_COUNT = 5;
+
+interface DashboardSidebarProps {
+  collapsed: boolean;
+  onToggleCollapsed: () => void;
+  className?: string;
+}
+
+export function DashboardSidebar({
+  collapsed,
+  onToggleCollapsed,
+  className,
+}: DashboardSidebarProps) {
+  const recentCollections = collections.slice(0, RECENT_COLLECTIONS_COUNT);
+
+  return (
+    <aside
+      className={cn(
+        "flex h-full flex-col border-r border-border bg-sidebar text-sidebar-foreground transition-[width] duration-200",
+        collapsed ? "w-16" : "w-64",
+        className
+      )}
+    >
+      <div
+        className={cn(
+          "flex h-16 shrink-0 items-center gap-2 border-b border-border px-4",
+          collapsed && "justify-center px-0"
+        )}
+      >
+        <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-foreground text-background">
+          <Puzzle className="size-4" />
+        </div>
+        {!collapsed && (
+          <span className="font-heading text-base font-semibold">DevDrop</span>
+        )}
+      </div>
+      <div className="flex-1 overflow-y-auto px-3 py-4">
+        <SidebarSection title="Types" collapsed={collapsed}>
+          {itemTypes.map((type) => {
+            const Icon = ITEM_TYPE_ICONS[type.name] ?? Layers;
+            const label = ITEM_TYPE_LABELS[type.name] ?? type.name;
+            const isPro = PRO_ONLY_TYPES.has(type.name);
+
+            return (
+              <SidebarLink
+                key={type.id}
+                href={`/items/${type.name}s`}
+                icon={Icon}
+                label={label}
+                iconColor={type.color}
+                collapsed={collapsed}
+                badge={isPro ? "PRO" : undefined}
+              />
+            );
+          })}
+        </SidebarSection>
+
+        <Separator className="my-4" />
+
+        <SidebarSection
+          title="Collections"
+          collapsed={collapsed}
+          action={
+            !collapsed && (
+              <Button variant="ghost" size="icon-xs" aria-label="New collection">
+                <Plus />
+              </Button>
+            )
+          }
+        >
+          {recentCollections.map((collection) => (
+            <SidebarLink
+              key={collection.id}
+              href={`/collections/${collection.id}`}
+              icon={Folder}
+              label={collection.name}
+              collapsed={collapsed}
+              trailing={
+                collection.isFavorite ? (
+                  <Star className="size-3.5 fill-current text-yellow-400" />
+                ) : undefined
+              }
+            />
+          ))}
+        </SidebarSection>
+      </div>
+
+      {!currentUser.isPro && !collapsed && (
+        <div className="m-3 rounded-lg border border-border bg-card p-3">
+          <p className="text-sm font-medium">Upgrade to Pro</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Unlock AI features, files &amp; unlimited items.
+          </p>
+        </div>
+      )}
+
+      <Separator />
+      <button
+        type="button"
+        onClick={onToggleCollapsed}
+        className="flex items-center gap-2 px-4 py-3 text-sm text-muted-foreground hover:text-foreground"
+      >
+        {collapsed ? <ChevronRight className="size-4" /> : <ChevronLeft className="size-4" />}
+        {!collapsed && "Collapse"}
+      </button>
+    </aside>
+  );
+}
+
+interface SidebarSectionProps {
+  title: string;
+  collapsed: boolean;
+  action?: React.ReactNode;
+  children: React.ReactNode;
+}
+
+function SidebarSection({ title, collapsed, action, children }: SidebarSectionProps) {
+  return (
+    <div>
+      {!collapsed && (
+        <div className="mb-2 flex items-center justify-between px-2">
+          <span className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+            {title}
+          </span>
+          {action}
+        </div>
+      )}
+      <nav className="flex flex-col gap-0.5">{children}</nav>
+    </div>
+  );
+}
+
+interface SidebarLinkProps {
+  href: string;
+  icon: LucideIcon;
+  label: string;
+  iconColor?: string;
+  collapsed: boolean;
+  badge?: string;
+  trailing?: React.ReactNode;
+}
+
+function SidebarLink({
+  href,
+  icon: Icon,
+  label,
+  iconColor,
+  collapsed,
+  badge,
+  trailing,
+}: SidebarLinkProps) {
+  const link = (
+    <Link
+      href={href}
+      className={cn(
+        "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-foreground/90 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+        collapsed && "justify-center px-0"
+      )}
+    >
+      <Icon
+        className="size-4 shrink-0"
+        style={iconColor ? { color: iconColor } : undefined}
+      />
+      {!collapsed && (
+        <>
+          <span className="flex-1 truncate">{label}</span>
+          {badge && (
+            <Badge variant="outline" className="text-[10px] text-muted-foreground">
+              {badge}
+            </Badge>
+          )}
+          {trailing}
+        </>
+      )}
+    </Link>
+  );
+
+  if (!collapsed) return link;
+
+  return (
+    <Tooltip>
+      <TooltipTrigger render={link} />
+      <TooltipContent side="right">{label}</TooltipContent>
+    </Tooltip>
+  );
+}
