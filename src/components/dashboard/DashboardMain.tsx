@@ -1,7 +1,9 @@
-import { collections, items, itemTypes, currentUser } from "@/lib/mock-data";
+import { items, itemTypes, currentUser } from "@/lib/mock-data";
 import { StatsCards } from "@/components/dashboard/StatsCards";
 import { CollectionCard } from "@/components/dashboard/CollectionCard";
 import { ItemCard } from "@/components/dashboard/ItemCard";
+import { getRecentCollections } from "@/lib/db/collections";
+import { prisma } from "@/lib/prisma";
 
 const RECENT_COLLECTIONS_COUNT = 6;
 const RECENT_ITEMS_COUNT = 10;
@@ -13,8 +15,13 @@ function getGreeting() {
   return "Good evening";
 }
 
-export function DashboardMain() {
-  const recentCollections = collections.slice(0, RECENT_COLLECTIONS_COUNT);
+export async function DashboardMain() {
+  const demoUser = await prisma.user.findUnique({
+    where: { email: "demo@devstash.io" },
+  });
+  const recentCollections = demoUser
+    ? await getRecentCollections(demoUser.id, RECENT_COLLECTIONS_COUNT)
+    : [];
   const pinnedItems = items.filter((item) => item.isPinned);
   const recentItems = items.slice(0, RECENT_ITEMS_COUNT);
 
