@@ -1,27 +1,33 @@
 import { Layers, Folder, Star, Heart } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { collections, items } from "@/lib/mock-data";
+import type { ItemStats } from "@/lib/db/items";
+import type { CollectionStats } from "@/lib/db/collections";
 
-export function StatsCards() {
+interface StatsCardsProps {
+  itemStats: ItemStats;
+  collectionStats: CollectionStats;
+}
+
+export function StatsCards({ itemStats, collectionStats }: StatsCardsProps) {
   const stats = [
     {
       label: "Total items",
-      value: items.length,
+      value: itemStats.totalItems,
       icon: Layers,
     },
     {
       label: "Collections",
-      value: collections.length,
+      value: collectionStats.totalCollections,
       icon: Folder,
     },
     {
       label: "Favorite items",
-      value: items.filter((item) => item.isFavorite).length,
+      value: itemStats.favoriteItems,
       icon: Heart,
     },
     {
       label: "Favorite collections",
-      value: collections.filter((collection) => collection.isFavorite).length,
+      value: collectionStats.favoriteCollections,
       icon: Star,
     },
   ];

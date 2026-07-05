@@ -1,12 +1,27 @@
-import { items, itemTypes, currentUser } from "@/lib/mock-data";
+import { currentUser } from "@/lib/mock-data";
 import { StatsCards } from "@/components/dashboard/StatsCards";
 import { CollectionCard } from "@/components/dashboard/CollectionCard";
 import { ItemCard } from "@/components/dashboard/ItemCard";
-import { getRecentCollections } from "@/lib/db/collections";
+import {
+  getRecentCollections,
+  getCollectionStats,
+  type CollectionWithStats,
+  type CollectionStats,
+} from "@/lib/db/collections";
+import {
+  getPinnedItems,
+  getRecentItems,
+  getItemStats,
+  type ItemWithType,
+  type ItemStats,
+} from "@/lib/db/items";
 import { prisma } from "@/lib/prisma";
 
 const RECENT_COLLECTIONS_COUNT = 6;
 const RECENT_ITEMS_COUNT = 10;
+
+const EMPTY_ITEM_STATS: ItemStats = { totalItems: 0, favoriteItems: 0 };
+const EMPTY_COLLECTION_STATS: CollectionStats = { totalCollections: 0, favoriteCollections: 0 };
 
 function getGreeting() {
   const hour = new Date().getHours();
@@ -19,11 +34,23 @@ export async function DashboardMain() {
   const demoUser = await prisma.user.findUnique({
     where: { email: "demo@devstash.io" },
   });
-  const recentCollections = demoUser
-    ? await getRecentCollections(demoUser.id, RECENT_COLLECTIONS_COUNT)
-    : [];
-  const pinnedItems = items.filter((item) => item.isPinned);
-  const recentItems = items.slice(0, RECENT_ITEMS_COUNT);
+
+  let recentCollections: CollectionWithStats[] = [];
+  let pinnedItems: ItemWithType[] = [];
+  let recentItems: ItemWithType[] = [];
+  let itemStats: ItemStats = EMPTY_ITEM_STATS;
+  let collectionStats: CollectionStats = EMPTY_COLLECTION_STATS;
+
+  if (demoUser) {
+    [recentCollections, pinnedItems, recentItems, itemStats, collectionStats] =
+      await Promise.all([
+        getRecentCollections(demoUser.id, RECENT_COLLECTIONS_COUNT),
+        getPinnedItems(demoUser.id),
+        getRecentItems(demoUser.id, RECENT_ITEMS_COUNT),
+        getItemStats(demoUser.id),
+        getCollectionStats(demoUser.id),
+      ]);
+  }
 
   return (
     <div className="flex flex-col gap-8">
@@ -36,7 +63,7 @@ export async function DashboardMain() {
         </p>
       </div>
 
-      <StatsCards />
+      <StatsCards itemStats={itemStats} collectionStats={collectionStats} />
 
       <section className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
@@ -55,11 +82,9 @@ export async function DashboardMain() {
             <h2 className="text-lg font-semibold">Pinned Items</h2>
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {pinnedItems.map((item) => {
-              const itemType = itemTypes.find((type) => type.id === item.itemTypeId);
-              if (!itemType) return null;
-              return <ItemCard key={item.id} item={item} itemType={itemType} />;
-            })}
+            {pinnedItems.map((item) => (
+              <ItemCard key={item.id} item={item} />
+            ))}
           </div>
         </section>
       )}
@@ -69,11 +94,9 @@ export async function DashboardMain() {
           <h2 className="text-lg font-semibold">Recent Items</h2>
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {recentItems.map((item) => {
-            const itemType = itemTypes.find((type) => type.id === item.itemTypeId);
-            if (!itemType) return null;
-            return <ItemCard key={item.id} item={item} itemType={itemType} />;
-          })}
+          {recentItems.map((item) => (
+            <ItemCard key={item.id} item={item} />
+          ))}
         </div>
       </section>
     </div>
