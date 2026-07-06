@@ -6,8 +6,20 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { DashboardSidebar } from "@/components/layout/DashboardSidebar";
 import { DashboardTopBar } from "@/components/layout/DashboardTopBar";
+import type { SystemItemType } from "@/lib/db/items";
+import type { CollectionWithStats } from "@/lib/db/collections";
 
-export function DashboardShell({ children }: { children: React.ReactNode }) {
+interface DashboardShellProps {
+  children: React.ReactNode;
+  itemTypes: SystemItemType[];
+  recentCollections: CollectionWithStats[];
+}
+
+export function DashboardShell({
+  children,
+  itemTypes,
+  recentCollections,
+}: DashboardShellProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -17,6 +29,8 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           collapsed={collapsed}
           onToggleCollapsed={() => setCollapsed((c) => !c)}
           className="hidden lg:flex"
+          itemTypes={itemTypes}
+          recentCollections={recentCollections}
         />
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <SheetContent side="left" className="w-72 p-0 lg:hidden">
@@ -25,6 +39,8 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
               collapsed={false}
               onToggleCollapsed={() => setMobileOpen(false)}
               className="flex w-full border-r-0"
+              itemTypes={itemTypes}
+              recentCollections={recentCollections}
             />
           </SheetContent>
         </Sheet>

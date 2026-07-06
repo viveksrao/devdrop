@@ -2,7 +2,7 @@
 
 <!-- Feature name and short description -->
 
-Dashboard Items - Replace dummy pinned/recent item data in the dashboard main area with real data from the database, fetched via Prisma (see @context/features/dashboard-items-spec.md)
+Stats & Sidebar - Wire the dashboard stats and sidebar (item types + collections) to real database data via Prisma (see @context/features/stats-sidebar-spec.md)
 
 ## Status
 
@@ -14,19 +14,17 @@ Completed
 
 <!-- Goals and Requirements -->
 
-- Create src/lib/db/items.ts with data fetching functions
-- Fetch pinned and recent items directly in server component (replacing src/lib/mock-data.ts usage)
-- Item card icon/border derived from the item's type
-- Display item type tags and existing card details (keep current design)
-- If there are no pinned items, hide that section entirely
-- Update item stats display
+- Display main-area stats from database data instead of src/lib/mock-data.ts, keeping current design/layout
+- Display system item types in the sidebar with their icons, linking to /items/[typename]
+- Add a "View all collections" link under the sidebar collections list, going to /collections
+- Sidebar collections: keep star icons for favorites; for recents, show a colored circle based on the most-used item type in that collection
+- Add database functions to src/lib/db/items.ts (already exists from Dashboard Items feature - extend it), referencing src/lib/db/collections.ts as needed
 
 ## Notes
 
 <!-- Any extra notes -->
 
-- Reference @context/screenshots/dashboard-ui-main.png if needed, but layout and design is already in place
-- Full requirements in @context/features/dashboard-items-spec.md
+- Full requirements in @context/features/stats-sidebar-spec.md
 
 ## History
 
@@ -45,3 +43,4 @@ Completed
 - 2026-07-05 - Seed data completed: `prisma/seed.ts` rewritten to seed the demo user (demo@devstash.io, bcryptjs-hashed password), all 7 system item types, and 5 collections (React Patterns, AI Workflows, DevOps, Terminal Commands, Design Resources) with 18 items total; script is idempotent (clears the demo user's prior items/collections before reseeding); added `bcryptjs` dependency (see @context/features/seed-spec.md)
 - 2026-07-05 - Dashboard Collections completed: `src/lib/db/collections.ts` added with `getRecentCollections()` fetching real collections (with item counts, dominant content-type color, and per-type icons) via Prisma; `DashboardMain` and `CollectionCard` updated to render this real data in place of `mock-data.ts` collections; verified in-browser against the seeded demo user's 5 collections (see @context/features/dashboard-collections-spec.md)
 - 2026-07-05 - Dashboard Items completed: `src/lib/db/items.ts` added with `getPinnedItems()`, `getRecentItems()`, and `getItemStats()`; `getCollectionStats()` added to `collections.ts`; `ItemCard` now derives its icon/border color from the item's type and takes a single `ItemWithType` prop; `StatsCards` now takes real stats as props instead of reading mock data; `DashboardMain` fetches pinned items, recent items, and stats via Prisma for the demo user; verified in-browser that the Pinned Items section hides when empty and appears correctly when an item is pinned (see @context/features/dashboard-items-spec.md)
+- 2026-07-05 - Stats & Sidebar completed: `getSystemItemTypes()` added to `src/lib/db/items.ts`; `DashboardPage` fetches item types and recent collections for the demo user and passes them through `DashboardShell` into `DashboardSidebar`, replacing the sidebar's `mock-data.ts` usage; sidebar collections now show a colored circle for the most-used item type (favorites keep the star) and a "View all collections" link to `/collections` was added; main-area stats were already wired to the database from the Dashboard Items feature; verified in-browser (see @context/features/stats-sidebar-spec.md)

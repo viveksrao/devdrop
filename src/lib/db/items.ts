@@ -72,3 +72,31 @@ export async function getItemStats(userId: string): Promise<ItemStats> {
 
   return { totalItems, favoriteItems };
 }
+
+export interface SystemItemType {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+}
+
+const SYSTEM_ITEM_TYPE_ORDER = [
+  "snippet",
+  "prompt",
+  "command",
+  "note",
+  "file",
+  "image",
+  "link",
+];
+
+export async function getSystemItemTypes(): Promise<SystemItemType[]> {
+  const types = await prisma.itemType.findMany({
+    where: { isSystem: true },
+    select: { id: true, name: true, icon: true, color: true },
+  });
+
+  return types.sort(
+    (a, b) => SYSTEM_ITEM_TYPE_ORDER.indexOf(a.name) - SYSTEM_ITEM_TYPE_ORDER.indexOf(b.name)
+  );
+}

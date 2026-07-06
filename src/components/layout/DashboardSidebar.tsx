@@ -6,7 +6,6 @@ import {
   ChevronRight,
   Plus,
   Star,
-  Folder,
   Layers,
   Puzzle,
   type LucideIcon,
@@ -20,28 +19,30 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { collections, itemTypes, currentUser } from "@/lib/mock-data";
+import { currentUser } from "@/lib/mock-data";
 import {
   ITEM_TYPE_ICONS,
   ITEM_TYPE_LABELS,
   PRO_ONLY_TYPES,
 } from "@/lib/constants/item-types";
-
-const RECENT_COLLECTIONS_COUNT = 5;
+import type { SystemItemType } from "@/lib/db/items";
+import type { CollectionWithStats } from "@/lib/db/collections";
 
 interface DashboardSidebarProps {
   collapsed: boolean;
   onToggleCollapsed: () => void;
   className?: string;
+  itemTypes: SystemItemType[];
+  recentCollections: CollectionWithStats[];
 }
 
 export function DashboardSidebar({
   collapsed,
   onToggleCollapsed,
   className,
+  itemTypes,
+  recentCollections,
 }: DashboardSidebarProps) {
-  const recentCollections = collections.slice(0, RECENT_COLLECTIONS_COUNT);
-
   return (
     <aside
       className={cn(
@@ -101,7 +102,16 @@ export function DashboardSidebar({
             <SidebarLink
               key={collection.id}
               href={`/collections/${collection.id}`}
-              icon={Folder}
+              iconNode={
+                <span className="flex size-4 shrink-0 items-center justify-center">
+                  <span
+                    className="size-2.5 rounded-full"
+                    style={{
+                      backgroundColor: collection.dominantColor ?? "var(--muted-foreground)",
+                    }}
+                  />
+                </span>
+              }
               label={collection.name}
               collapsed={collapsed}
               trailing={
@@ -111,6 +121,12 @@ export function DashboardSidebar({
               }
             />
           ))}
+          <SidebarLink
+            href="/collections"
+            icon={Layers}
+            label="View all collections"
+            collapsed={collapsed}
+          />
         </SidebarSection>
       </div>
 
@@ -161,7 +177,8 @@ function SidebarSection({ title, collapsed, action, children }: SidebarSectionPr
 
 interface SidebarLinkProps {
   href: string;
-  icon: LucideIcon;
+  icon?: LucideIcon;
+  iconNode?: React.ReactNode;
   label: string;
   iconColor?: string;
   collapsed: boolean;
@@ -172,6 +189,7 @@ interface SidebarLinkProps {
 function SidebarLink({
   href,
   icon: Icon,
+  iconNode,
   label,
   iconColor,
   collapsed,
@@ -186,10 +204,14 @@ function SidebarLink({
         collapsed && "justify-center px-0"
       )}
     >
-      <Icon
-        className="size-4 shrink-0"
-        style={iconColor ? { color: iconColor } : undefined}
-      />
+      {iconNode ?? (
+        Icon && (
+          <Icon
+            className="size-4 shrink-0"
+            style={iconColor ? { color: iconColor } : undefined}
+          />
+        )
+      )}
       {!collapsed && (
         <>
           <span className="flex-1 truncate">{label}</span>
