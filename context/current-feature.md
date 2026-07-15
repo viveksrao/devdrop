@@ -2,29 +2,17 @@
 
 <!-- Feature name and short description -->
 
-Add Count of each Type to Sidebar - Show total item count per type in the sidebar, moving the PRO badge next to the type label (see @context/features/add-count-of-each-types-sidebar.md)
-
 ## Status
 
 <!-- Not Started | In Progress | Completed  -->
-
-Not Started
 
 ## Goals
 
 <!-- Goals and Requirements -->
 
-- Add total count of items for each system type (Snippets, Prompts, Commands, Notes, Files, Images, Links) in the sidebar
-- Position the count where the PRO badge is currently placed (trailing side of the row)
-- Move the PRO badge to sit next to the type label text ("Files" & "Images"), with spacing between badge and text
-
 ## Notes
 
 <!-- Any extra notes -->
-
-- Full requirements in @context/features/add-count-of-each-types-sidebar.md
-- Current implementation: src/components/layout/DashboardSidebar.tsx — SidebarLink renders `badge` (currently "PRO") in the trailing slot after the label; needs restructuring so PRO badge moves next to label and a new count is added in the trailing slot
-- Item types + counts likely need extending in src/lib/db/items.ts (getSystemItemTypes or a new function) to include per-type item counts
 
 ## History
 
@@ -44,3 +32,4 @@ Not Started
 - 2026-07-05 - Dashboard Collections completed: `src/lib/db/collections.ts` added with `getRecentCollections()` fetching real collections (with item counts, dominant content-type color, and per-type icons) via Prisma; `DashboardMain` and `CollectionCard` updated to render this real data in place of `mock-data.ts` collections; verified in-browser against the seeded demo user's 5 collections (see @context/features/dashboard-collections-spec.md)
 - 2026-07-05 - Dashboard Items completed: `src/lib/db/items.ts` added with `getPinnedItems()`, `getRecentItems()`, and `getItemStats()`; `getCollectionStats()` added to `collections.ts`; `ItemCard` now derives its icon/border color from the item's type and takes a single `ItemWithType` prop; `StatsCards` now takes real stats as props instead of reading mock data; `DashboardMain` fetches pinned items, recent items, and stats via Prisma for the demo user; verified in-browser that the Pinned Items section hides when empty and appears correctly when an item is pinned (see @context/features/dashboard-items-spec.md)
 - 2026-07-05 - Stats & Sidebar completed: `getSystemItemTypes()` added to `src/lib/db/items.ts`; `DashboardPage` fetches item types and recent collections for the demo user and passes them through `DashboardShell` into `DashboardSidebar`, replacing the sidebar's `mock-data.ts` usage; sidebar collections now show a colored circle for the most-used item type (favorites keep the star) and a "View all collections" link to `/collections` was added; main-area stats were already wired to the database from the Dashboard Items feature; verified in-browser (see @context/features/stats-sidebar-spec.md)
+- 2026-07-14 - Add Count of each Type to Sidebar completed: `getSystemItemTypes()` now takes `userId` and joins a `prisma.item.groupBy` count per type, exposing `itemCount` on `SystemItemType`; `DashboardSidebar`'s `SidebarLink` moved the PRO badge to sit inline next to the type label (with `gap-2` spacing) and now renders the per-type item count in the trailing slot where PRO used to be; verified in-browser that counts render correctly and Files/Images show label → PRO badge → count (see @context/features/add-count-of-each-types-sidebar.md)
