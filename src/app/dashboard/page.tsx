@@ -12,7 +12,7 @@ export default async function DashboardPage() {
   });
 
   const [itemTypes, recentCollections] = await Promise.all([
-    getSystemItemTypes(),
+    demoUser ? getSystemItemTypes(demoUser.id) : Promise.resolve([]),
     demoUser
       ? getRecentCollections(demoUser.id, SIDEBAR_RECENT_COLLECTIONS_COUNT)
       : Promise.resolve([]),

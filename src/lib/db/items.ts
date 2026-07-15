@@ -78,6 +78,7 @@ export interface SystemItemType {
   name: string;
   icon: string;
   color: string;
+  itemCount: number;
 }
 
 const SYSTEM_ITEM_TYPE_ORDER = [
@@ -90,13 +91,24 @@ const SYSTEM_ITEM_TYPE_ORDER = [
   "link",
 ];
 
-export async function getSystemItemTypes(): Promise<SystemItemType[]> {
-  const types = await prisma.itemType.findMany({
-    where: { isSystem: true },
-    select: { id: true, name: true, icon: true, color: true },
-  });
+export async function getSystemItemTypes(userId: string): Promise<SystemItemType[]> {
+  const [types, counts] = await Promise.all([
+    prisma.itemType.findMany({
+      where: { isSystem: true },
+      select: { id: true, name: true, icon: true, color: true },
+    }),
+    prisma.item.groupBy({
+      by: ["itemTypeId"],
+      where: { userId },
+      _count: { _all: true },
+    }),
+  ]);
 
-  return types.sort(
-    (a, b) => SYSTEM_ITEM_TYPE_ORDER.indexOf(a.name) - SYSTEM_ITEM_TYPE_ORDER.indexOf(b.name)
-  );
+  const countByTypeId = new Map(counts.map((c) => [c.itemTypeId, c._count._all]));
+
+  return types
+    .map((type) => ({ ...type, itemCount: countByTypeId.get(type.id) ?? 0 }))
+    .sort(
+      (a, b) => SYSTEM_ITEM_TYPE_ORDER.indexOf(a.name) - SYSTEM_ITEM_TYPE_ORDER.indexOf(b.name)
+    );
 }

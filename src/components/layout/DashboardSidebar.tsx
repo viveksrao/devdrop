@@ -80,6 +80,11 @@ export function DashboardSidebar({
                 iconColor={type.color}
                 collapsed={collapsed}
                 badge={isPro ? "PRO" : undefined}
+                trailing={
+                  <span className="text-xs text-muted-foreground">
+                    {type.itemCount}
+                  </span>
+                }
               />
             );
           })}
@@ -214,12 +219,14 @@ function SidebarLink({
       )}
       {!collapsed && (
         <>
-          <span className="flex-1 truncate">{label}</span>
-          {badge && (
-            <Badge variant="outline" className="text-[10px] text-muted-foreground">
-              {badge}
-            </Badge>
-          )}
+          <span className="flex flex-1 items-center gap-2 truncate">
+            <span className="truncate">{label}</span>
+            {badge && (
+              <Badge variant="outline" className="text-[10px] text-muted-foreground">
+                {badge}
+              </Badge>
+            )}
+          </span>
           {trailing}
         </>
       )}

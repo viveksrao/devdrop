@@ -2,29 +2,29 @@
 
 <!-- Feature name and short description -->
 
-Stats & Sidebar - Wire the dashboard stats and sidebar (item types + collections) to real database data via Prisma (see @context/features/stats-sidebar-spec.md)
+Add Count of each Type to Sidebar - Show total item count per type in the sidebar, moving the PRO badge next to the type label (see @context/features/add-count-of-each-types-sidebar.md)
 
 ## Status
 
 <!-- Not Started | In Progress | Completed  -->
 
-Completed
+Not Started
 
 ## Goals
 
 <!-- Goals and Requirements -->
 
-- Display main-area stats from database data instead of src/lib/mock-data.ts, keeping current design/layout
-- Display system item types in the sidebar with their icons, linking to /items/[typename]
-- Add a "View all collections" link under the sidebar collections list, going to /collections
-- Sidebar collections: keep star icons for favorites; for recents, show a colored circle based on the most-used item type in that collection
-- Add database functions to src/lib/db/items.ts (already exists from Dashboard Items feature - extend it), referencing src/lib/db/collections.ts as needed
+- Add total count of items for each system type (Snippets, Prompts, Commands, Notes, Files, Images, Links) in the sidebar
+- Position the count where the PRO badge is currently placed (trailing side of the row)
+- Move the PRO badge to sit next to the type label text ("Files" & "Images"), with spacing between badge and text
 
 ## Notes
 
 <!-- Any extra notes -->
 
-- Full requirements in @context/features/stats-sidebar-spec.md
+- Full requirements in @context/features/add-count-of-each-types-sidebar.md
+- Current implementation: src/components/layout/DashboardSidebar.tsx — SidebarLink renders `badge` (currently "PRO") in the trailing slot after the label; needs restructuring so PRO badge moves next to label and a new count is added in the trailing slot
+- Item types + counts likely need extending in src/lib/db/items.ts (getSystemItemTypes or a new function) to include per-type item counts
 
 ## History
 
