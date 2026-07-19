@@ -1,18 +1,25 @@
 # Current Feature
 
-<!-- Feature name and short description -->
+Fix Duplicate Data Fetching on Dashboard Load
+
+`DashboardPage` (`src/app/dashboard/page.tsx`) and `DashboardMain` (`src/components/dashboard/DashboardMain.tsx`) each independently look up the demo user via `prisma.user.findUnique` and each call `getRecentCollections` (with different counts: 5 vs 6), causing duplicate queries on every dashboard render.
 
 ## Status
 
-<!-- Not Started | In Progress | Completed  -->
+Completed
 
 ## Goals
 
-<!-- Goals and Requirements -->
+- Fetch the demo user exactly once per dashboard render, in `DashboardPage`.
+- Pass `userId` down as a prop into `DashboardMain` instead of `DashboardMain` re-querying `prisma.user.findUnique` itself.
+- Resolve the `RECENT_COLLECTIONS_COUNT` (6, used for the main-area collections grid) vs `SIDEBAR_RECENT_COLLECTIONS_COUNT` (5, used for the sidebar) discrepancy — keep both call sites but avoid re-fetching the user.
+- No change to visual output — sidebar and main content should render identically to today.
 
 ## Notes
 
-<!-- Any extra notes -->
+- Scope is limited to this duplicate-fetch fix only — do not touch the mock-data/currentUser inconsistency or other findings from the recent codebase audit; those are separate, out of scope for this feature.
+- `DashboardMain` is currently an async server component with no props; it will need a `userId: string` prop (or similar) instead.
+- If `demoUser` is null, current behavior renders empty state (empty arrays/stats) rather than erroring — preserve this fallback behavior.
 
 ## History
 
@@ -33,3 +40,4 @@
 - 2026-07-05 - Dashboard Items completed: `src/lib/db/items.ts` added with `getPinnedItems()`, `getRecentItems()`, and `getItemStats()`; `getCollectionStats()` added to `collections.ts`; `ItemCard` now derives its icon/border color from the item's type and takes a single `ItemWithType` prop; `StatsCards` now takes real stats as props instead of reading mock data; `DashboardMain` fetches pinned items, recent items, and stats via Prisma for the demo user; verified in-browser that the Pinned Items section hides when empty and appears correctly when an item is pinned (see @context/features/dashboard-items-spec.md)
 - 2026-07-05 - Stats & Sidebar completed: `getSystemItemTypes()` added to `src/lib/db/items.ts`; `DashboardPage` fetches item types and recent collections for the demo user and passes them through `DashboardShell` into `DashboardSidebar`, replacing the sidebar's `mock-data.ts` usage; sidebar collections now show a colored circle for the most-used item type (favorites keep the star) and a "View all collections" link to `/collections` was added; main-area stats were already wired to the database from the Dashboard Items feature; verified in-browser (see @context/features/stats-sidebar-spec.md)
 - 2026-07-14 - Add Count of each Type to Sidebar completed: `getSystemItemTypes()` now takes `userId` and joins a `prisma.item.groupBy` count per type, exposing `itemCount` on `SystemItemType`; `DashboardSidebar`'s `SidebarLink` moved the PRO badge to sit inline next to the type label (with `gap-2` spacing) and now renders the per-type item count in the trailing slot where PRO used to be; verified in-browser that counts render correctly and Files/Images show label → PRO badge → count (see @context/features/add-count-of-each-types-sidebar.md)
+- 2026-07-19 - Fix Duplicate Data Fetching on Dashboard Load completed: `DashboardPage` (`src/app/dashboard/page.tsx`) is now the single place that looks up the demo user and fetches item types, sidebar/main recent collections, pinned items, recent items, and stats, passing them down as props; `DashboardMain` converted from an async server component (which duplicated the `prisma.user.findUnique` lookup and its own `getRecentCollections` call) into a pure presentational component receiving all data via props; verified `npm run build` and `npm run lint` pass and the dashboard renders identically in-browser
