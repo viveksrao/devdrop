@@ -2,26 +2,8 @@ import { currentUser } from "@/lib/mock-data";
 import { StatsCards } from "@/components/dashboard/StatsCards";
 import { CollectionCard } from "@/components/dashboard/CollectionCard";
 import { ItemCard } from "@/components/dashboard/ItemCard";
-import {
-  getRecentCollections,
-  getCollectionStats,
-  type CollectionWithStats,
-  type CollectionStats,
-} from "@/lib/db/collections";
-import {
-  getPinnedItems,
-  getRecentItems,
-  getItemStats,
-  type ItemWithType,
-  type ItemStats,
-} from "@/lib/db/items";
-import { prisma } from "@/lib/prisma";
-
-const RECENT_COLLECTIONS_COUNT = 6;
-const RECENT_ITEMS_COUNT = 10;
-
-const EMPTY_ITEM_STATS: ItemStats = { totalItems: 0, favoriteItems: 0 };
-const EMPTY_COLLECTION_STATS: CollectionStats = { totalCollections: 0, favoriteCollections: 0 };
+import type { CollectionWithStats, CollectionStats } from "@/lib/db/collections";
+import type { ItemWithType, ItemStats } from "@/lib/db/items";
 
 function getGreeting() {
   const hour = new Date().getHours();
@@ -30,28 +12,21 @@ function getGreeting() {
   return "Good evening";
 }
 
-export async function DashboardMain() {
-  const demoUser = await prisma.user.findUnique({
-    where: { email: "demo@devstash.io" },
-  });
+interface DashboardMainProps {
+  recentCollections: CollectionWithStats[];
+  pinnedItems: ItemWithType[];
+  recentItems: ItemWithType[];
+  itemStats: ItemStats;
+  collectionStats: CollectionStats;
+}
 
-  let recentCollections: CollectionWithStats[] = [];
-  let pinnedItems: ItemWithType[] = [];
-  let recentItems: ItemWithType[] = [];
-  let itemStats: ItemStats = EMPTY_ITEM_STATS;
-  let collectionStats: CollectionStats = EMPTY_COLLECTION_STATS;
-
-  if (demoUser) {
-    [recentCollections, pinnedItems, recentItems, itemStats, collectionStats] =
-      await Promise.all([
-        getRecentCollections(demoUser.id, RECENT_COLLECTIONS_COUNT),
-        getPinnedItems(demoUser.id),
-        getRecentItems(demoUser.id, RECENT_ITEMS_COUNT),
-        getItemStats(demoUser.id),
-        getCollectionStats(demoUser.id),
-      ]);
-  }
-
+export function DashboardMain({
+  recentCollections,
+  pinnedItems,
+  recentItems,
+  itemStats,
+  collectionStats,
+}: DashboardMainProps) {
   return (
     <div className="flex flex-col gap-8">
       <div>
