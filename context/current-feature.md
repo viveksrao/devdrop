@@ -1,25 +1,55 @@
-# Current Feature
+# Current Feature: Auth Setup - NextAuth + GitHub Provider
 
-Fix Duplicate Data Fetching on Dashboard Load
-
-`DashboardPage` (`src/app/dashboard/page.tsx`) and `DashboardMain` (`src/components/dashboard/DashboardMain.tsx`) each independently look up the demo user via `prisma.user.findUnique` and each call `getRecentCollections` (with different counts: 5 vs 6), causing duplicate queries on every dashboard render.
+Set up NextAuth v5 with Prisma adapter and GitHub OAuth. Use NextAuth's default pages for testing.
 
 ## Status
 
-Completed
+In Progress
 
 ## Goals
 
-- Fetch the demo user exactly once per dashboard render, in `DashboardPage`.
-- Pass `userId` down as a prop into `DashboardMain` instead of `DashboardMain` re-querying `prisma.user.findUnique` itself.
-- Resolve the `RECENT_COLLECTIONS_COUNT` (6, used for the main-area collections grid) vs `SIDEBAR_RECENT_COLLECTIONS_COUNT` (5, used for the sidebar) discrepancy — keep both call sites but avoid re-fetching the user.
-- No change to visual output — sidebar and main content should render identically to today.
+- Install NextAuth v5 (`next-auth@beta`) and `@auth/prisma-adapter`
+- Set up split auth config pattern for edge compatibility
+- Add GitHub OAuth provider
+- Protect `/dashboard/*` routes using Next.js 16 proxy
+- Redirect unauthenticated users to sign-in
 
 ## Notes
 
-- Scope is limited to this duplicate-fetch fix only — do not touch the mock-data/currentUser inconsistency or other findings from the recent codebase audit; those are separate, out of scope for this feature.
-- `DashboardMain` is currently an async server component with no props; it will need a `userId: string` prop (or similar) instead.
-- If `demoUser` is null, current behavior renders empty state (empty arrays/stats) rather than erroring — preserve this fallback behavior.
+Files to create:
+
+1. `src/auth.config.ts` - Edge-compatible config (providers only, no adapter)
+2. `src/auth.ts` - Full config with Prisma adapter and JWT strategy
+3. `src/app/api/auth/[...nextauth]/route.ts` - Export handlers from auth.ts
+4. `src/proxy.ts` - Route protection with redirect logic
+5. `src/types/next-auth.d.ts` - Extend Session type with user.id
+
+Key gotchas (use Context7 to verify newest config/conventions):
+
+- Use `next-auth@beta` (not `@latest` which installs v4)
+- Proxy file must be at `src/proxy.ts` (same level as `app/`)
+- Use named export: `export const proxy = auth(...)` not default export
+- Use `session: { strategy: 'jwt' }` with split config pattern
+- Don't set custom `pages.signIn` - use NextAuth's default page
+
+Environment variables:
+
+```
+AUTH_SECRET=
+AUTH_GITHUB_ID=
+AUTH_GITHUB_SECRET=
+```
+
+Testing:
+
+1. Go to `/dashboard` - should redirect to sign-in
+2. Click "Sign in with GitHub"
+3. Verify redirect back to `/dashboard` after auth
+
+References:
+
+- Edge compatibility: https://authjs.dev/getting-started/installation#edge-compatibility
+- Prisma adapter: https://authjs.dev/getting-started/adapters/prisma
 
 ## History
 
