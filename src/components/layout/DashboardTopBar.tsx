@@ -1,21 +1,20 @@
 import { Plus, Search, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { currentUser } from "@/lib/mock-data";
+import { UserAvatar } from "@/components/shared/UserAvatar";
+
+interface DashboardTopBarUser {
+  name?: string | null;
+  email?: string | null;
+  image?: string | null;
+}
 
 interface DashboardTopBarProps {
   sidebarTrigger?: React.ReactNode;
+  user: DashboardTopBarUser;
 }
 
-export function DashboardTopBar({ sidebarTrigger }: DashboardTopBarProps) {
-  const initials = currentUser.name
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-
+export function DashboardTopBar({ sidebarTrigger, user }: DashboardTopBarProps) {
   return (
     <header className="flex h-16 items-center justify-between gap-4 border-b border-border px-6">
       <div className="flex flex-1 items-center gap-4">
@@ -37,9 +36,7 @@ export function DashboardTopBar({ sidebarTrigger }: DashboardTopBarProps) {
         <Button variant="ghost" size="icon" aria-label="Settings">
           <Settings />
         </Button>
-        <Avatar>
-          <AvatarFallback>{initials}</AvatarFallback>
-        </Avatar>
+        <UserAvatar name={user.name} email={user.email} image={user.image} />
       </div>
     </header>
   );

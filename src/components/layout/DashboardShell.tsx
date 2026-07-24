@@ -9,16 +9,25 @@ import { DashboardTopBar } from "@/components/layout/DashboardTopBar";
 import type { SystemItemType } from "@/lib/db/items";
 import type { CollectionWithStats } from "@/lib/db/collections";
 
+interface ShellUser {
+  name?: string | null;
+  email?: string | null;
+  image?: string | null;
+  isPro: boolean;
+}
+
 interface DashboardShellProps {
   children: React.ReactNode;
   itemTypes: SystemItemType[];
   recentCollections: CollectionWithStats[];
+  user: ShellUser;
 }
 
 export function DashboardShell({
   children,
   itemTypes,
   recentCollections,
+  user,
 }: DashboardShellProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -31,6 +40,7 @@ export function DashboardShell({
           className="hidden lg:flex"
           itemTypes={itemTypes}
           recentCollections={recentCollections}
+          user={user}
         />
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <SheetContent side="left" className="w-72 p-0 lg:hidden">
@@ -41,11 +51,13 @@ export function DashboardShell({
               className="flex w-full border-r-0"
               itemTypes={itemTypes}
               recentCollections={recentCollections}
+              user={user}
             />
           </SheetContent>
         </Sheet>
       <div className="flex min-w-0 flex-1 flex-col">
         <DashboardTopBar
+        user={user}
         sidebarTrigger={
           <Button
             variant="ghost"

@@ -1,4 +1,3 @@
-import { currentUser } from "@/lib/mock-data";
 import { StatsCards } from "@/components/dashboard/StatsCards";
 import { CollectionCard } from "@/components/dashboard/CollectionCard";
 import { ItemCard } from "@/components/dashboard/ItemCard";
@@ -13,6 +12,7 @@ function getGreeting() {
 }
 
 interface DashboardMainProps {
+  userName: string;
   recentCollections: CollectionWithStats[];
   pinnedItems: ItemWithType[];
   recentItems: ItemWithType[];
@@ -21,6 +21,7 @@ interface DashboardMainProps {
 }
 
 export function DashboardMain({
+  userName,
   recentCollections,
   pinnedItems,
   recentItems,
@@ -31,7 +32,7 @@ export function DashboardMain({
     <div className="flex flex-col gap-8">
       <div>
         <h1 className="text-2xl font-semibold">
-          {getGreeting()}, {currentUser.name}
+          {getGreeting()}, {userName}
         </h1>
         <p className="mt-1 text-muted-foreground">
           Your developer knowledge, all in one place.
