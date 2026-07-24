@@ -19,7 +19,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { currentUser } from "@/lib/mock-data";
+import { SidebarUserFooter } from "@/components/layout/SidebarUserFooter";
 import {
   ITEM_TYPE_ICONS,
   ITEM_TYPE_LABELS,
@@ -28,12 +28,20 @@ import {
 import type { SystemItemType } from "@/lib/db/items";
 import type { CollectionWithStats } from "@/lib/db/collections";
 
+interface SidebarUser {
+  name?: string | null;
+  email?: string | null;
+  image?: string | null;
+  isPro: boolean;
+}
+
 interface DashboardSidebarProps {
   collapsed: boolean;
   onToggleCollapsed: () => void;
   className?: string;
   itemTypes: SystemItemType[];
   recentCollections: CollectionWithStats[];
+  user: SidebarUser;
 }
 
 export function DashboardSidebar({
@@ -42,6 +50,7 @@ export function DashboardSidebar({
   className,
   itemTypes,
   recentCollections,
+  user,
 }: DashboardSidebarProps) {
   return (
     <aside
@@ -135,7 +144,7 @@ export function DashboardSidebar({
         </SidebarSection>
       </div>
 
-      {!currentUser.isPro && !collapsed && (
+      {!user.isPro && !collapsed && (
         <div className="m-3 rounded-lg border border-border bg-card p-3">
           <p className="text-sm font-medium">Upgrade to Pro</p>
           <p className="mt-1 text-xs text-muted-foreground">
@@ -144,6 +153,13 @@ export function DashboardSidebar({
         </div>
       )}
 
+      <Separator />
+      <SidebarUserFooter
+        name={user.name}
+        email={user.email}
+        image={user.image}
+        collapsed={collapsed}
+      />
       <Separator />
       <button
         type="button"
