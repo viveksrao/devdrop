@@ -1,29 +1,16 @@
-# Current Feature: Auth UI - Sign In, Register & Sign Out
+# Current Feature
 
 ## Status
 
-In Progress
+<!-- Not Started | In Progress | Complete -->
 
 ## Goals
 
-- Custom `/sign-in` page: email/password fields, "Sign in with GitHub" button, link to register, form validation and error display
-- Custom `/register` page: name/email/password/confirm-password fields, form validation (passwords match, email format), submits to `/api/auth/register`, redirects to sign-in on success
-- Bottom of sidebar: user avatar (GitHub image or initials fallback), user name, dropdown/up with "Sign out" link, clicking avatar navigates to `/profile`
-- Replace NextAuth default pages with these custom pages
+<!-- Bullet points of what success looks like -->
 
 ## Notes
 
-- Avatar logic: if user has `image` (from GitHub) use it; otherwise generate initials from name (e.g., "Brad Traversy" → "BT")
-- Build a reusable avatar component that handles both cases (image vs. initials fallback)
-- Spec: see @context/features/auth-phase-3-spec.md
-- Testing checklist:
-  1. `/sign-in` renders custom page
-  2. GitHub sign-in flow works
-  3. Email/password sign-in flow works
-  4. Avatar shows in top bar (GitHub image or initials)
-  5. Clicking avatar shows dropdown
-  6. "Sign out" logs out and redirects
-  7. `/register` creates a new account and redirects to sign-in
+<!-- Additional context, constraints, or details from spec -->
 
 ## History
 
@@ -47,3 +34,4 @@ In Progress
 - 2026-07-19 - Fix Duplicate Data Fetching on Dashboard Load completed: `DashboardPage` (`src/app/dashboard/page.tsx`) is now the single place that looks up the demo user and fetches item types, sidebar/main recent collections, pinned items, recent items, and stats, passing them down as props; `DashboardMain` converted from an async server component (which duplicated the `prisma.user.findUnique` lookup and its own `getRecentCollections` call) into a pure presentational component receiving all data via props; verified `npm run build` and `npm run lint` pass and the dashboard renders identically in-browser
 - 2026-07-24 - Auth Setup - NextAuth + GitHub Provider completed: installed `next-auth@beta` (v5.0.0-beta.32) and `@auth/prisma-adapter`; added split config pattern (`src/auth.config.ts` edge-compatible providers-only config, `src/auth.ts` full config with `PrismaAdapter`, JWT session strategy, and `authorized`/`jwt`/`session` callbacks exposing `user.id`); added `src/app/api/auth/[...nextauth]/route.ts` exporting `handlers`; added `src/proxy.ts` (named `proxy` export, matcher scoped to `/dashboard/:path*`); added `src/types/next-auth.d.ts` extending `Session.user` with `id`; used NextAuth's default sign-in page (no custom `pages.signIn`); verified `npm run build` and `npm run lint` pass, and in-browser that `/dashboard` redirects unauthenticated users to sign-in with correct `callbackUrl` and clicking "Sign in with GitHub" reaches GitHub's OAuth authorize screen with correct `client_id`/`redirect_uri` (see @context/features/auth-phase-1-spec.md)
 - 2026-07-24 - Auth Credentials - Email/Password Provider completed: added `zod` dependency for input validation; `src/auth.config.ts` now includes a `Credentials` provider placeholder (`authorize: () => null`) alongside `GitHub`; `src/auth.ts` overrides the provider list with a real `Credentials` provider whose `authorize` validates input via Zod, looks up the user by email, and checks the password with `bcrypt.compare`; added `src/app/api/auth/register/route.ts` (`POST`) validating name/email/password/confirmPassword with Zod (min 8-char password, passwords-must-match refinement), rejecting existing emails (409), hashing with `bcrypt.hash` (cost 12), and creating the user; `password` field already existed on `User` from the initial migration, no new migration needed; verified `npm run build` and `npm run lint` pass, and in-browser/curl that registration succeeds and correctly rejects duplicate emails/mismatched passwords/short passwords, credentials sign-in succeeds and rejects wrong passwords, GitHub OAuth still reaches its authorize screen, and `/dashboard` is reachable after credentials login (see @context/features/auth-phase-2-spec.md)
+- 2026-07-24 - Auth UI - Sign In, Register & Sign Out completed: `src/auth.config.ts` now sets `pages.signIn: "/sign-in"`, replacing NextAuth's default page; added custom `/sign-in` page (`SignInForm`: email/password + "Sign in with GitHub", inline error display, `redirectTo`/`callbackUrl` support) and `/register` page (`RegisterForm`: name/email/password/confirm with Zod validation, posts to `/api/auth/register`, shows a `sonner` success toast, redirects to `/sign-in`); added a minimal session-gated `/profile` page; added reusable `UserAvatar` component (GitHub `image` or initials fallback, e.g. "Brad Traversy" → "BT") and `SidebarUserFooter` (avatar + name/email, dropdown with profile link and sign-out) rendered at the bottom of `DashboardSidebar`; added shadcn `dropdown-menu`, `label`, and `sonner` components and wired `Toaster` into the root layout; `DashboardPage` now reads the real session via `auth()` instead of a hardcoded demo-user lookup, passing `user` through `DashboardShell` into `DashboardSidebar`/`DashboardTopBar`/`DashboardMain`, removing `currentUser` mock-data usage from all three; verified `npm run build` and `npm run lint` pass, and in-browser that `/sign-in` renders custom UI, GitHub OAuth reaches its authorize screen, credentials sign-in/sign-out work, the sidebar/top-bar avatar shows initials correctly for a non-GitHub user, the dropdown opens and its profile item navigates to `/profile`, and registration creates an account, shows the success toast, and redirects to `/sign-in` (see @context/features/auth-phase-3-spec.md)
