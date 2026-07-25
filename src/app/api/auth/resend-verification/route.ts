@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { createVerificationToken } from "@/lib/verification-token";
 import { sendVerificationEmail } from "@/lib/emails/send-verification-email";
+import { isEmailVerificationEnabled } from "@/lib/config";
 
 const resendSchema = z.object({
   email: z.string().email(),
@@ -21,9 +22,14 @@ export async function POST(request: Request) {
     }
 
     const { email } = parsed.data;
-    const user = await prisma.user.findUnique({ where: { email } });
 
     // Always return success to avoid leaking whether an account exists.
+    if (!isEmailVerificationEnabled) {
+      return NextResponse.json({ success: true });
+    }
+
+    const user = await prisma.user.findUnique({ where: { email } });
+
     if (!user || !user.password || user.emailVerified) {
       return NextResponse.json({ success: true });
     }

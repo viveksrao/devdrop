@@ -4,6 +4,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { createVerificationToken } from "@/lib/verification-token";
 import { sendVerificationEmail } from "@/lib/emails/send-verification-email";
+import { isEmailVerificationEnabled } from "@/lib/config";
 
 const registerSchema = z
   .object({
@@ -42,14 +43,21 @@ export async function POST(request: Request) {
     const hashedPassword = await bcrypt.hash(password, 12);
 
     const user = await prisma.user.create({
-      data: { name, email, password: hashedPassword },
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+        emailVerified: isEmailVerificationEnabled ? null : new Date(),
+      },
     });
 
-    try {
-      const token = await createVerificationToken(email);
-      await sendVerificationEmail(email, token);
-    } catch (emailError) {
-      console.error("Failed to send verification email:", emailError);
+    if (isEmailVerificationEnabled) {
+      try {
+        const token = await createVerificationToken(email);
+        await sendVerificationEmail(email, token);
+      } catch (emailError) {
+        console.error("Failed to send verification email:", emailError);
+      }
     }
 
     return NextResponse.json({
