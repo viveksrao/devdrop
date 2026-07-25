@@ -56,7 +56,7 @@ export function RegisterForm() {
       return;
     }
 
-    toast.success("Account created — you can now log in");
+    toast.success("Account created — check your email to verify before signing in");
     router.push("/sign-in");
   }
 
