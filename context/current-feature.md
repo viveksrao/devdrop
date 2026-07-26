@@ -1,30 +1,16 @@
 # Current Feature
 
-Forgot Password
-
 ## Status
 
-Complete
+<!-- Not Started | In Progress | Complete -->
 
 ## Goals
 
-- "Forgot password?" link on the sign-in page leading to a `/forgot-password` page
-- User submits their email; if an account exists, a password reset email is sent (response never reveals whether the account exists)
-- Reset email links to `/reset-password?token=...`; user sets a new password there (with confirm-password validation)
-- On successful reset, the token is consumed (single-use) and the user is redirected to `/sign-in` with a success toast/message
-- Expired or invalid tokens show a clear error with a way to request a new reset link
-- Reuses the existing `VerificationToken` model — no schema changes/migrations
+<!-- Bullet points of what success looks like -->
 
 ## Notes
 
-- **Reuse, don't fork**: follow the exact pattern already established for email verification (`src/lib/verification-token.ts`, `src/lib/emails/send-verification-email.ts`, `src/app/api/auth/verify-email/route.ts`) — same token generation (`crypto.randomBytes(32).toString("hex")`), same 24h-style expiry approach, same Resend usage (`src/lib/resend.ts`), same redirect-with-query-param UX pattern used by `SignInForm`.
-- **Critical collision issue to solve**: `createVerificationToken`/`consumeVerificationToken` in `src/lib/verification-token.ts` key solely on `identifier` (the raw email) with no purpose field, and `createVerificationToken` deletes all existing tokens for that identifier before creating a new one. If password-reset tokens reuse this helper unchanged, requesting a password reset would silently invalidate a pending email-verification token for the same address (and vice versa), and `consumeVerificationToken` has no way to distinguish which kind of token was consumed. Resolve this by namespacing the identifier for password-reset tokens (e.g. prefix with `pwreset:${email}`) so the two token kinds never collide, while still using the same underlying `VerificationToken` table/model (no schema change).
-- Do not touch the existing email-verification flow's behavior — only add alongside it.
-- New password must pass the same Zod rule already used at registration (`min 8 chars`) plus a confirm-password match refinement, consistent with `RegisterForm`.
-- The reset request endpoint must not leak account existence (always return a generic success response), matching the existing intentional behavior in `resend-verification/route.ts`.
-- Respect `isEmailVerificationEnabled`/`src/lib/config.ts` conventions if relevant, but note password reset is independent of email verification status — a user should be able to reset their password even if unverified (do not gate reset on `emailVerified`).
-- Follow existing file organization: API routes under `src/app/api/auth/`, pages under `src/app/`, form components under `src/components/auth/`.
-- Add a "Forgot password?" link near the password field in `src/components/auth/SignInForm.tsx`.
+<!-- Additional context, constraints, or details from spec -->
 
 ## History
 
