@@ -1,22 +1,97 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { auth } from "@/auth";
 import { UserAvatar } from "@/components/shared/UserAvatar";
+import { StatsCards } from "@/components/dashboard/StatsCards";
+import { TypeBreakdown } from "@/components/profile/TypeBreakdown";
+import { ChangePasswordForm } from "@/components/profile/ChangePasswordForm";
+import { DeleteAccountDialog } from "@/components/profile/DeleteAccountDialog";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getUserProfile } from "@/lib/db/user";
+import { getItemStats, getSystemItemTypes } from "@/lib/db/items";
+import { getCollectionStats } from "@/lib/db/collections";
 
 export default async function ProfilePage() {
   const session = await auth();
   if (!session?.user) redirect("/sign-in");
 
-  const { name, email, image } = session.user;
+  const userId = session.user.id;
+
+  const [profile, itemStats, collectionStats, itemTypes] = await Promise.all([
+    getUserProfile(userId),
+    getItemStats(userId),
+    getCollectionStats(userId),
+    getSystemItemTypes(userId),
+  ]);
+
+  if (!profile) redirect("/sign-in");
+
+  const memberSince = profile.createdAt.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-6">
-      <div className="flex w-full max-w-sm flex-col items-center gap-4 text-center">
-        <UserAvatar name={name} email={email} image={image} size="lg" />
+    <div className="mx-auto flex min-h-screen max-w-3xl flex-col gap-8 p-6">
+      <Link
+        href="/dashboard"
+        className="flex w-fit items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+      >
+        <ArrowLeft className="size-4" />
+        Back to dashboard
+      </Link>
+
+      <div className="flex items-center gap-4">
+        <UserAvatar
+          name={profile.name}
+          email={profile.email}
+          image={profile.image}
+          size="lg"
+        />
         <div>
-          <h1 className="text-xl font-semibold">{name ?? "Account"}</h1>
-          {email && <p className="mt-1 text-sm text-muted-foreground">{email}</p>}
+          <h1 className="text-xl font-semibold">{profile.name ?? "Account"}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{profile.email}</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Member since {memberSince}
+          </p>
         </div>
       </div>
+
+      <section className="flex flex-col gap-4">
+        <h2 className="text-sm font-medium text-muted-foreground">Usage</h2>
+        <StatsCards itemStats={itemStats} collectionStats={collectionStats} />
+        <TypeBreakdown types={itemTypes} />
+      </section>
+
+      {profile.hasPassword && (
+        <section>
+          <Card>
+            <CardHeader>
+              <CardTitle>Change password</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ChangePasswordForm />
+            </CardContent>
+          </Card>
+        </section>
+      )}
+
+      <section>
+        <Card>
+          <CardHeader>
+            <CardTitle>Danger zone</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3">
+            <p className="text-sm text-muted-foreground">
+              Permanently delete your account and all associated items and
+              collections. This action cannot be undone.
+            </p>
+            <DeleteAccountDialog />
+          </CardContent>
+        </Card>
+      </section>
     </div>
   );
 }
