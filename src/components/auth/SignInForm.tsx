@@ -54,6 +54,11 @@ export function SignInForm() {
       return;
     }
 
+    if (result?.code === "rate-limited") {
+      setError("Too many sign-in attempts. Please try again in a few minutes.");
+      return;
+    }
+
     if (result?.error) {
       setError("Invalid email or password");
       return;
@@ -64,12 +69,19 @@ export function SignInForm() {
 
   async function handleResendVerification() {
     setIsResending(true);
-    await fetch("/api/auth/resend-verification", {
+    const res = await fetch("/api/auth/resend-verification", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email }),
     });
     setIsResending(false);
+
+    if (res.status === 429) {
+      const json = await res.json();
+      toast.error(json.error ?? "Too many attempts. Please try again later.");
+      return;
+    }
+
     toast.success("If that account needs verification, a new email is on its way.");
   }
 
