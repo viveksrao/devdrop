@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { z } from "zod";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,13 +29,20 @@ export function ForgotPasswordForm() {
 
     setIsSubmitting(true);
 
-    await fetch("/api/auth/forgot-password", {
+    const res = await fetch("/api/auth/forgot-password", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(parsed.data),
     });
 
     setIsSubmitting(false);
+
+    if (res.status === 429) {
+      const json = await res.json();
+      toast.error(json.error ?? "Too many attempts. Please try again later.");
+      return;
+    }
+
     setIsSubmitted(true);
   }
 

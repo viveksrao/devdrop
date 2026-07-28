@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { createVerificationToken } from "@/lib/verification-token";
 import { sendVerificationEmail } from "@/lib/emails/send-verification-email";
 import { isEmailVerificationEnabled } from "@/lib/config";
+import { checkRateLimit, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
 
 const resendSchema = z.object({
   email: z.string().email(),
@@ -22,6 +23,12 @@ export async function POST(request: Request) {
     }
 
     const { email } = parsed.data;
+
+    const ip = getClientIp(request);
+    const rateLimit = await checkRateLimit("resend-verification", `${ip}:${email}`);
+    if (!rateLimit.success) {
+      return rateLimitResponse(rateLimit.reset);
+    }
 
     // Always return success to avoid leaking whether an account exists.
     if (!isEmailVerificationEnabled) {
