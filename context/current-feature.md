@@ -1,37 +1,16 @@
-# Current Feature: Rate Limiting for Auth
+# Current Feature
 
 ## Status
 
-Not Started
+<!-- Not Started | In Progress | Complete -->
 
 ## Goals
 
-- Add rate limiting to auth-related API routes to prevent brute force, credential stuffing, and email-endpoint abuse
-- Use Upstash Redis with `@upstash/ratelimit` (sliding window) for serverless-compatible limiting
-- Create a reusable rate limiting utility in `src/lib/rate-limit.ts`
-- Return 429 Too Many Requests with a clear JSON error and `Retry-After` header when limited
-- Display user-friendly rate-limit errors on the frontend via toast
+<!-- Bullet points of what success looks like -->
 
 ## Notes
 
-Endpoints to protect:
-
-| Endpoint | Limit | Window | Key By |
-|----------|-------|--------|--------|
-| `/api/auth/callback/credentials` (login) | 5 attempts | 15 min | IP + email |
-| `/api/auth/register` | 3 attempts | 1 hour | IP |
-| `/api/auth/forgot-password` | 3 attempts | 1 hour | IP |
-| `/api/auth/reset-password` | 5 attempts | 15 min | IP |
-| `/api/auth/resend-verification` | 3 attempts | 15 min | IP + email |
-
-- Extract IP from `x-forwarded-for` header (Vercel) or request
-- Combine IP + identifier (email) where applicable for tighter limits
-- Rate limit checks should return `{ success, remaining, reset }`
-- Env vars needed: `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`
-- Upstash free tier: 10k requests/day, sufficient for this use case
-- Rate limiting should fail open (allow request) if Upstash is unavailable
-- Login limiting is tricky with NextAuth's `credentials` provider — the callback route is handled internally by NextAuth, so this may need a custom check inside the `authorize` callback (in `src/auth.ts`) rather than route middleware, since there's no separate route handler to wrap for that endpoint
-- Consider rate-limiting middleware as a cleaner implementation later, not required now
+<!-- Additional context, constraints, or details from spec -->
 
 ## History
 
@@ -60,3 +39,4 @@ Endpoints to protect:
 - 2026-07-25 - Toggle Email Verification via Env Flag completed: added `src/lib/config.ts` exporting `isEmailVerificationEnabled` (`EMAIL_VERIFICATION_ENABLED !== "false"`, default enabled); `register/route.ts` skips creating/sending a verification token when disabled and sets `emailVerified` immediately on the created user instead; `src/auth.ts` Credentials `authorize` skips the `emailVerified` gate (no `EmailNotVerifiedError`) when disabled; `resend-verification/route.ts` no-ops (still returns `{ success: true }`) when disabled; no schema changes, all existing verification infrastructure left intact for when a Resend domain is linked; verified `npm run build` and `npm run lint` pass, and via curl + Neon SQL against the dev database that with the flag off a new registration auto-verifies and signs in immediately, and with it on (default) behavior is unchanged — registration leaves `emailVerified` null and sign-in is blocked until verified; motivation is that Resend has no domain linked yet so it can currently only send to the account owner's own address
 - 2026-07-26 - Forgot Password completed: `src/lib/verification-token.ts` gained `createPasswordResetToken`/`consumePasswordResetToken`, reusing the `VerificationToken` model but namespacing `identifier` with a `pwreset:` prefix so reset tokens can't collide with or clobber a pending email-verification token for the same address; added `src/lib/emails/send-password-reset-email.ts` (Resend, links to `/reset-password?token=...`); added `POST /api/auth/forgot-password` (always returns generic success, only emails when the user exists and has a password, so GitHub-only accounts aren't emailed) and `POST /api/auth/reset-password` (Zod-validated min-8-char password + confirm match, consumes the token, updates the bcrypt hash); added `/forgot-password` page + `ForgotPasswordForm`, and `/reset-password` page + `ResetPasswordForm` (missing/invalid/expired token shows a clear error with a "Request a new link" action); added a "Forgot password?" link next to the password label in `SignInForm`; no schema changes/migrations; verified `npm run build` and `npm run lint` pass, and in-browser via Playwright + Neon SQL that the full flow works end-to-end (request → namespaced token created → reset → old password rejected, new password works → token deleted/single-use), invalid and missing tokens show the correct error UI, and requesting a reset for a nonexistent email returns the same generic message (no account-existence leak)
 - 2026-07-26 - Profile Page completed: `src/lib/db/user.ts` added with `getUserProfile()` (name, email, image, createdAt, `hasPassword`); `/profile` rebuilt to show avatar (GitHub image or initials via existing `UserAvatar`), name/email/member-since date, usage stats (reusing `StatsCards`) plus a new `TypeBreakdown` component showing per-type item counts (reusing `getSystemItemTypes()` and `ITEM_TYPE_ICONS`/`ITEM_TYPE_LABELS`); added `POST /api/auth/change-password` (authenticated, verifies current password via bcrypt before updating) and `ChangePasswordForm`, shown only when `hasPassword` is true (hidden for GitHub-only accounts); added `DELETE /api/auth/delete-account` (authenticated, `prisma.user.delete` cascades items/collections/accounts/sessions) and `DeleteAccountDialog` (shadcn `alert-dialog`, added via `npx shadcn add`, requires typing "DELETE" to enable the confirm button, signs out on success); no schema changes; verified `npm run build` and `npm run lint` pass, and in-browser via Playwright that stats/breakdown render correctly for the seeded demo user, change-password rejects a wrong current password and succeeds with the right one (round-tripped and restored the demo user's original password), the delete confirm button stays disabled until "DELETE" is typed, and a real delete on a throwaway test account cascaded correctly (post-delete sign-in fails)
+- 2026-07-27 - Rate Limiting for Auth completed: installed `@upstash/ratelimit` and `@upstash/redis`; added `src/lib/rate-limit.ts` with `checkRateLimit(name, key)` (per-endpoint sliding-window configs, memoized `Ratelimit` instances, fails open if `UPSTASH_REDIS_REST_URL`/`TOKEN` are unset or Upstash errors), `getClientIp()` (reads `x-forwarded-for`/`x-real-ip`), and `rateLimitResponse()` (429 JSON + `Retry-After` header); wired into `register` (3/hour, IP), `forgot-password` (3/hour, IP), `reset-password` (5/15min, IP), and `resend-verification` (3/15min, IP+email) routes; login rate limiting (5/15min, IP+email) added inside the Credentials `authorize` callback in `src/auth.ts` via a new `RateLimitedError extends CredentialsSignin` (code `rate-limited`), since NextAuth handles `/api/auth/callback/credentials` internally with no separate route to wrap — `authorize(credentials, request)`'s second arg provides the raw `Request` for IP extraction; `SignInForm` shows the rate-limit error inline (login) and via toast (resend-verification), `ForgotPasswordForm` toasts on 429; added `UPSTASH_REDIS_REST_URL`/`UPSTASH_REDIS_REST_TOKEN` to `.env.example`; no schema changes; verified `npm run build` and `npm run lint` pass, and live (dev server + real Upstash credentials) that forgot-password returns 429 with correct `Retry-After` after 3 requests and the sign-in form shows "Too many sign-in attempts..." after 5 failed logins for the same email+IP (see @context/features/rate-limiting-spec.md)
