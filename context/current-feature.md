@@ -1,28 +1,21 @@
-# Current Feature: Items List View
+# Current Feature
 
 ## Status
 
-In Progress
+<!-- Not Started | In Progress | Complete -->
 
 ## Goals
 
-- Create dynamic route `/items/[type]` (e.g., /items/snippets, /items/notes)
-- Fetch and display items filtered by type
-- Responsive grid of ItemCard components
-- Two columns on medium and up
-- Each card has left border colored by item type
-- Follow existing codebase patterns
+<!-- Bullet points of what success looks like -->
 
 ## Notes
 
-- See spec at @context/features/item-list-view-spec.md
-- `ItemCard` already exists and derives icon/border color from the item's type (from Dashboard Items feature) — reuse it rather than rebuilding
-- Sidebar type links route to `/items/[type]` (e.g. `/items/snippets`) — type slugs are the plural system type names
-- Should follow existing `src/lib/db/items.ts` patterns (e.g. `getRecentItems`) for fetching items by type via Prisma
+<!-- Additional context, constraints, or details from spec -->
 
 ## History
 
 <!-- Keep this updated. Earliest to latest -->
+- 2026-07-30 - Items List View completed: added dynamic route `/items/[type]` filtering items by type; `getItemsByType(userId, typeName)` added to `src/lib/db/items.ts` following the existing `getRecentItems`/`getPinnedItems` pattern; `getItemTypeNameFromSlug()` added to `src/lib/constants/item-types.ts` to resolve plural URL slugs (e.g. `snippets`) back to the system type name, with `notFound()` on unrecognized slugs; `ItemCard` now renders a left border colored by the item's type (`border-l-4` + `borderLeftColor`), which also improves the existing Dashboard Pinned/Recent Items sections since the component is shared; new page is session-gated (`auth()` + redirect to `/sign-in`), renders inside the existing `DashboardShell`, and shows a responsive `grid-cols-1 md:grid-cols-2` grid with an empty state; verified `npm run build` and `npm run lint` pass, and in-browser via Playwright that populated types (e.g. Snippets) render the correct two-column grid with colored borders, an empty type (Notes) shows "No notes yet.", an invalid type slug 404s, and the dashboard's existing item cards render without regression (see @context/features/item-list-view-spec.md)
 
 - 2026-04-05 (`ee234aa`) - Initial commit from Create Next App (Next.js project scaffolded)
 - 2026-04-05 (`4a0a5cd`) - Bootstrap Your Files Manually
