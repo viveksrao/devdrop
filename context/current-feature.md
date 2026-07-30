@@ -1,16 +1,24 @@
-# Current Feature
+# Current Feature: Items List View
 
 ## Status
 
-<!-- Not Started | In Progress | Complete -->
+In Progress
 
 ## Goals
 
-<!-- Bullet points of what success looks like -->
+- Create dynamic route `/items/[type]` (e.g., /items/snippets, /items/notes)
+- Fetch and display items filtered by type
+- Responsive grid of ItemCard components
+- Two columns on medium and up
+- Each card has left border colored by item type
+- Follow existing codebase patterns
 
 ## Notes
 
-<!-- Additional context, constraints, or details from spec -->
+- See spec at @context/features/item-list-view-spec.md
+- `ItemCard` already exists and derives icon/border color from the item's type (from Dashboard Items feature) — reuse it rather than rebuilding
+- Sidebar type links route to `/items/[type]` (e.g. `/items/snippets`) — type slugs are the plural system type names
+- Should follow existing `src/lib/db/items.ts` patterns (e.g. `getRecentItems`) for fetching items by type via Prisma
 
 ## History
 

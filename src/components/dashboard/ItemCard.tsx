@@ -15,8 +15,9 @@ export function ItemCard({ item }: ItemCardProps) {
 
   return (
     <Card
-      className="h-full"
+      className="h-full border-l-4"
       style={{
+        borderLeftColor: itemType.color,
         ["--tw-ring-color" as string]: `${itemType.color}80`,
       }}
     >

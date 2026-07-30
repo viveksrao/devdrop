@@ -30,3 +30,9 @@ export const ITEM_TYPE_LABELS: Record<string, string> = {
 };
 
 export const PRO_ONLY_TYPES = new Set(["file", "image"]);
+
+const ITEM_TYPE_NAMES = Object.keys(ITEM_TYPE_ICONS);
+
+export function getItemTypeNameFromSlug(slug: string): string | undefined {
+  return ITEM_TYPE_NAMES.find((name) => `${name}s` === slug);
+}

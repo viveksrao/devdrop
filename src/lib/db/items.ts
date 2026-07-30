@@ -59,6 +59,19 @@ export async function getRecentItems(userId: string, limit: number): Promise<Ite
   return items.map(toItemWithType);
 }
 
+export async function getItemsByType(
+  userId: string,
+  typeName: string
+): Promise<ItemWithType[]> {
+  const items = await prisma.item.findMany({
+    where: { userId, itemType: { name: typeName } },
+    orderBy: { createdAt: "desc" },
+    include: { itemType: true, tags: true },
+  });
+
+  return items.map(toItemWithType);
+}
+
 export interface ItemStats {
   totalItems: number;
   favoriteItems: number;
