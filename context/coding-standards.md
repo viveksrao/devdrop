@@ -55,6 +55,7 @@ Example v4 configuration:
 - Server Actions: `src/actions/[feature].ts`
 - Types: `src/types/[feature].ts`
 - Lib/Utils: `src/lib/[utility].ts`
+- Unit tests: colocated next to the file under test, `[name].test.ts`
 
 ## Naming
 
@@ -95,3 +96,11 @@ Example v4 configuration:
 - No commented-out code unless specified
 - No unused imports or variables
 - Keep functions under 50 lines when possible
+
+## Testing
+
+- Vitest for unit tests, run via `npm test` (or `npm run test:watch`)
+- Only test **server actions** (`src/actions/`) and **utilities/lib code** (`src/lib/`) — no component/UI tests
+- Colocate tests next to the file under test: `src/lib/[utility].test.ts`
+- Never hit a real database in unit tests — mock `@/lib/prisma` via `prismaMock` from `src/lib/__mocks__/prisma.ts` (a `vitest-mock-extended` deep mock, auto-reset before each test by `vitest.setup.ts`)
+- Unit tests verify logic in isolation; they don't replace the in-browser verification step in the workflow

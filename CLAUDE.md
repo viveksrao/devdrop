@@ -14,9 +14,11 @@ Read the following to get the full context of the project:
 ## Commands
 
 ```bash
-npm run dev      # start dev server at localhost:3000
-npm run build    # production build
-npm run lint     # run ESLint
+npm run dev       # start dev server at localhost:3000
+npm run build     # production build
+npm run lint      # run ESLint
+npm test          # run unit tests (server actions & utilities only)
+npm run test:watch # run unit tests in watch mode
 ```
 
 ## Neon MCP Usage
