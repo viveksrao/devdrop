@@ -1,30 +1,22 @@
-# Current Feature: Item Drawer
+# Current Feature
 
 ## Status
 
-In Progress
+<!-- Not Started | In Progress | Complete -->
 
 ## Goals
 
-- Right-side slide-in drawer (shadcn `Sheet`, opens from the right) serves as the item detail view — no separate item page
-- Clicking an `ItemCard` opens the drawer populated with that item's full data
-- Works from both the dashboard and the items list pages
-- Action bar: Favorite (star icon, yellow when active), Pin, Copy, Edit (pencil icon), Delete (trash icon, right-aligned) — see screenshot for exact layout
-- Drawer shows a skeleton/loading state while fetching
-- Feels snappy — fetch on click, no page navigation
+<!-- Bullet points of what success looks like -->
 
 ## Notes
 
-- Scope for this pass: drawer details display only. Code editor and item-type-specific editing come later (actions can be present in the UI per spec, but wiring up full edit/copy/delete/favorite/pin behavior is not required unless trivial — display is the focus).
-- Card data (title, description, tags, etc.) continues to be fetched by the server component as before.
-- Full item detail (content, collections, language, etc.) is fetched on click via a new API route `/api/items/[id]`.
-- New query function for full item detail lives in `src/lib/db/items.ts`; the API route calls it with an auth check (session-gated, scoped to the requesting user).
-- Since the dashboard/items pages are server components, a client wrapper component is needed to manage drawer open/closed + selected item state.
-- Visual reference: @context/screenshots/dashboard-ui-drawer.png — shows type icon + name in header, title, action bar row, Description, "Content · LANGUAGE" code block, Tags, Collections (as chips/links), and a "Last updated" footer timestamp.
+<!-- Additional context, constraints, or details from spec -->
 
 ## History
 
 <!-- Keep this updated. Earliest to latest -->
+- 2026-08-02 - Item Drawer completed: right-side shadcn `Sheet` drawer serves as the item detail view (no separate item page); `getItemDetail(userId, itemId)` added to `src/lib/db/items.ts` (content, url/file fields, language, tags, collections, timestamps, scoped to the requesting user) with unit tests for the happy path and the not-found/cross-user case; new session-gated `GET /api/items/[id]` route calls it; `ItemDrawerProvider` (mounted once in the root layout) exposes `useItemDrawer().openItem(id)` via context so any `ItemCard` can open the drawer without prop-drilling through the server-component page tree; `ItemCard` converted to a client component, now clickable (mouse + keyboard) to open the drawer; `ItemDrawer` shows a skeleton while fetching, then type icon/label header, title, action bar (Copy, Edit, Favorite, Pin, Delete — right-aligned), Description, Content (with language label, or URL/file variants), Tags, Collections, and a "Last updated" footer — matching @context/screenshots/dashboard-ui-drawer.png; action bar buttons are present but inert this pass (display-only scope, per spec — edit/copy/delete/favorite/pin behavior comes later); added shadcn `skeleton` component; verified `npm run lint`, `npm test` (6 passing), and `npm run build` all pass, and in-browser via Playwright that the drawer opens correctly from both the dashboard and `/items/[type]` pages, shows correct per-item data (content+language, URL, collections), closes via overlay click, switching items shows no stale-content flash, and the layout holds up at 390px mobile width with no regression to the existing mobile sidebar `Sheet`; fixed a width-overflow bug (action bar/code block pushing the drawer past the viewport) with `min-w-0`/`flex-wrap` found during in-browser testing (see @context/features/item-drawer-spec.md)
+
 - 2026-08-01 - Three-Column Item Listing Grid completed: `src/app/items/[type]/page.tsx` grid changed from `grid-cols-1 md:grid-cols-2` to `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`, matching the responsive breakpoint pattern already used in `DashboardMain.tsx`/`TypeBreakdown.tsx`; scope limited to the `/items/[type]` listing page only (Dashboard's recent/pinned item grids were out of scope and unaffected); verified `npm run lint`, `npm test`, and `npm run build` all pass, and in-browser via Playwright at 1440px (3 columns), 800px (2 columns), and 390px (1 column stacked) on a populated type (Links, 6 items), plus regression-checked the empty state (Notes) and the Dashboard's own grids still render correctly
 
 - 2026-08-01 - Vitest Setup completed: installed `vitest`, `vitest-mock-extended` as devDependencies (dropped `@vitejs/plugin-react`/component-testing scope — not needed since only server actions/utilities are tested, and it hit an unrelated `@babel/core` v7/v8 peer conflict from `shadcn`); added `vitest.config.mts` (native Vite `resolve.tsconfigPaths`, `node` environment, `src/**/*.test.ts` include, `.mts` extension to avoid an ESM-in-CommonJS warning since the project has no `"type": "module"`) and `vitest.setup.ts` (registers a global `vi.mock("@/lib/prisma")`, resets the mock via `beforeEach`); added `src/lib/__mocks__/prisma.ts` exporting a `vitest-mock-extended` `mockDeep<PrismaClient>()` (`prismaMock`) and `resetPrismaMock()` so `src/lib/db/*.ts` functions are unit-testable without a real database; added `npm test`/`npm run test:watch` scripts; added example tests establishing the pattern — `src/lib/constants/item-types.test.ts` (pure function) and `src/lib/db/items.test.ts` (Prisma-mocked `getItemStats`); updated `context/ai-interaction.md` workflow step 4 to require unit tests for server actions/utilities, `CLAUDE.md` commands list, and `context/coding-standards.md` (new Testing section + File Organization entry for colocated `[name].test.ts` files); no `src/actions/` directory exists yet (mutations currently go through API routes) — the same `prismaMock` pattern applies there once introduced; verified `npm test`, `npm run lint`, and `npm run build` all pass
