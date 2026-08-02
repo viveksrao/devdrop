@@ -55,7 +55,10 @@ export function ItemDrawer({ itemId, open, onOpenChange }: ItemDrawerProps) {
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full min-w-0 sm:max-w-lg" side="right">
+      <SheetContent
+        className="w-full min-w-0 data-[side=right]:sm:max-w-xl"
+        side="right"
+      >
         {loading || !item ? (
           <ItemDrawerSkeleton />
         ) : (
@@ -71,7 +74,7 @@ export function ItemDrawer({ itemId, open, onOpenChange }: ItemDrawerProps) {
               <SheetTitle className="text-lg">{item.title}</SheetTitle>
             </SheetHeader>
 
-            <div className="flex flex-wrap items-center gap-1 border-b px-4 pb-4">
+            <div className="flex flex-wrap items-center gap-1 overflow-x-auto border-b px-4 pb-4 sm:flex-nowrap">
               <Button variant="ghost" size="sm">
                 <Copy />
                 Copy
