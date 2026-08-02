@@ -72,6 +72,73 @@ export async function getItemsByType(
   return items.map(toItemWithType);
 }
 
+export interface ItemDetail {
+  id: string;
+  title: string;
+  description: string | null;
+  contentType: "TEXT" | "FILE" | "URL";
+  content: string | null;
+  fileUrl: string | null;
+  fileName: string | null;
+  fileSize: number | null;
+  url: string | null;
+  language: string | null;
+  isFavorite: boolean;
+  isPinned: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  tags: string[];
+  itemType: {
+    id: string;
+    name: string;
+    icon: string;
+    color: string;
+  };
+  collections: {
+    id: string;
+    name: string;
+  }[];
+}
+
+export async function getItemDetail(
+  userId: string,
+  itemId: string
+): Promise<ItemDetail | null> {
+  const item = await prisma.item.findFirst({
+    where: { id: itemId, userId },
+    include: {
+      itemType: true,
+      tags: true,
+      collections: { include: { collection: true } },
+    },
+  });
+
+  if (!item) return null;
+
+  return {
+    id: item.id,
+    title: item.title,
+    description: item.description,
+    contentType: item.contentType,
+    content: item.content,
+    fileUrl: item.fileUrl,
+    fileName: item.fileName,
+    fileSize: item.fileSize,
+    url: item.url,
+    language: item.language,
+    isFavorite: item.isFavorite,
+    isPinned: item.isPinned,
+    createdAt: item.createdAt,
+    updatedAt: item.updatedAt,
+    tags: item.tags.map((tag) => tag.name),
+    itemType: item.itemType,
+    collections: item.collections.map((ic) => ({
+      id: ic.collection.id,
+      name: ic.collection.name,
+    })),
+  };
+}
+
 export interface ItemStats {
   totalItems: number;
   favoriteItems: number;

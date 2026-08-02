@@ -1,7 +1,10 @@
+"use client";
+
 import { Pin } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ITEM_TYPE_ICONS, ITEM_TYPE_LABELS } from "@/lib/constants/item-types";
+import { useItemDrawer } from "@/components/dashboard/ItemDrawerProvider";
 import type { ItemWithType } from "@/lib/db/items";
 
 interface ItemCardProps {
@@ -12,10 +15,20 @@ export function ItemCard({ item }: ItemCardProps) {
   const { itemType } = item;
   const Icon = ITEM_TYPE_ICONS[itemType.name];
   const label = ITEM_TYPE_LABELS[itemType.name] ?? itemType.name;
+  const { openItem } = useItemDrawer();
 
   return (
     <Card
-      className="h-full border-l-4"
+      role="button"
+      tabIndex={0}
+      onClick={() => openItem(item.id)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          openItem(item.id);
+        }
+      }}
+      className="h-full cursor-pointer border-l-4 transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2"
       style={{
         borderLeftColor: itemType.color,
         ["--tw-ring-color" as string]: `${itemType.color}80`,
