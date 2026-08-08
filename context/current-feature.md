@@ -1,34 +1,22 @@
-# Current Feature: Item Drawer — Edit Mode
+# Current Feature
 
 ## Status
 
-In Progress
+<!-- Not Started | In Progress | Complete -->
 
 ## Goals
 
-- Edit button in the item drawer's action bar toggles the drawer into inline edit mode (same drawer, no navigation)
-- In edit mode, the action bar is replaced with Save and Cancel buttons
-- Cancel discards changes and returns to view mode
-- Save persists changes via a new `updateItem` server action, returns to view mode, and refreshes the drawer data
-- Toast notification on save success or error
-- Editable fields (all types): Title (required text input), Description (optional textarea), Tags (comma-separated text input → tag array on save)
-- Editable fields (type-specific, only shown for relevant type): Content (textarea) for snippet/prompt/command/note; Language (text input) for snippet/command; URL (text input) for link
-- Non-editable in edit mode (display only): item type, collections, created/updated dates
+<!-- Bullet points of what success looks like -->
 
 ## Notes
 
-- Zod schema validates the update payload server-side (source of truth): `title` non-empty trimmed string; `description`/`content`/`url`/`language` optional string or null; `url` must be a valid URL string when present; `tags` array of trimmed non-empty strings
-- Return Zod errors via `{ success: false, error }` so the client can display them
-- `updateItem(itemId, data)` in `src/actions/items.ts`, following the existing `{ success, data, error }` action pattern: validates with Zod, gets session via `auth()`, validates ownership, calls the query function
-- Query function `updateItem` in `src/lib/db/items.ts`; tag handling on update is disconnect-all-then-connect-or-create; returns the updated `ItemDetail` so the drawer can refresh without a second fetch
-- No form library — controlled inputs with local state
-- Client-side: disable Save when title is empty (basic UX guard only, Zod is the source of truth)
-- Content textarea does not need to be a code editor (later work)
-- After save, call `router.refresh()` so the underlying card list reflects changes
+<!-- Additional context, constraints, or details from spec -->
 
 ## History
 
 <!-- Keep this updated. Earliest to latest -->
+- 2026-08-08 - Item Drawer — Edit Mode completed: Edit button in the item drawer's action bar toggles the same drawer into inline edit mode instead of navigating away; action bar is replaced with Save/Cancel while editing; `updateItem` query function added to `src/lib/db/items.ts` (ownership-scoped lookup, tag handling is disconnect-all-then-connectOrCreate, returns the refreshed `ItemDetail`); `updateItem(itemId, data)` server action added at `src/actions/items.ts` — the project's first server action — validating the payload with Zod (`title` required trimmed string, `description`/`content`/`url`/`language` optional nullable strings, `url` validated as a URL when present, `tags` array of trimmed non-empty strings), checking the session via `auth()`, and following the existing `{ success, data, error }` pattern; `ItemDrawer` renders Title/Description/Tags inputs for all types plus Content (textarea) for snippet/prompt/command/note, Language for snippet/command, and URL for link, while item type/collections/timestamps stay read-only; Cancel discards local edits and returns to view mode; Save calls the action, shows a `sonner` toast on success/error, updates the drawer from the returned `ItemDetail` without a second fetch, and calls `router.refresh()` so the underlying card grid picks up the change; added the shadcn `textarea` component; avoided a `react-hooks/set-state-in-effect` lint error by resetting edit state via an explicit `handleOpenChange` wrapper on close and a render-time itemId comparison when switching items mid-session, rather than a `setState` inside `useEffect`; verified `npm run lint`, `npm test` (18 passing, new tests covering `updateItem` in both `src/lib/db/items.test.ts` and `src/actions/items.test.ts`), and `npm run build` all pass, and in-browser via Playwright that edit → save updates the drawer and the Recent Items card, edit → cancel discards changes, and a link-type item correctly shows the URL field in place of Content/Language (see @context/features/item-drawer-edit-spec.md)
+
 - 2026-08-02 - Item Drawer completed: right-side shadcn `Sheet` drawer serves as the item detail view (no separate item page); `getItemDetail(userId, itemId)` added to `src/lib/db/items.ts` (content, url/file fields, language, tags, collections, timestamps, scoped to the requesting user) with unit tests for the happy path and the not-found/cross-user case; new session-gated `GET /api/items/[id]` route calls it; `ItemDrawerProvider` (mounted once in the root layout) exposes `useItemDrawer().openItem(id)` via context so any `ItemCard` can open the drawer without prop-drilling through the server-component page tree; `ItemCard` converted to a client component, now clickable (mouse + keyboard) to open the drawer; `ItemDrawer` shows a skeleton while fetching, then type icon/label header, title, action bar (Copy, Edit, Favorite, Pin, Delete — right-aligned), Description, Content (with language label, or URL/file variants), Tags, Collections, and a "Last updated" footer — matching @context/screenshots/dashboard-ui-drawer.png; action bar buttons are present but inert this pass (display-only scope, per spec — edit/copy/delete/favorite/pin behavior comes later); added shadcn `skeleton` component; verified `npm run lint`, `npm test` (6 passing), and `npm run build` all pass, and in-browser via Playwright that the drawer opens correctly from both the dashboard and `/items/[type]` pages, shows correct per-item data (content+language, URL, collections), closes via overlay click, switching items shows no stale-content flash, and the layout holds up at 390px mobile width with no regression to the existing mobile sidebar `Sheet`; fixed a width-overflow bug (action bar/code block pushing the drawer past the viewport) with `min-w-0`/`flex-wrap` found during in-browser testing (see @context/features/item-drawer-spec.md)
 
 - 2026-08-01 - Three-Column Item Listing Grid completed: `src/app/items/[type]/page.tsx` grid changed from `grid-cols-1 md:grid-cols-2` to `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`, matching the responsive breakpoint pattern already used in `DashboardMain.tsx`/`TypeBreakdown.tsx`; scope limited to the `/items/[type]` listing page only (Dashboard's recent/pinned item grids were out of scope and unaffected); verified `npm run lint`, `npm test`, and `npm run build` all pass, and in-browser via Playwright at 1440px (3 columns), 800px (2 columns), and 390px (1 column stacked) on a populated type (Links, 6 items), plus regression-checked the empty state (Notes) and the Dashboard's own grids still render correctly
