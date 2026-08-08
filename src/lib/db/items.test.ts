@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { prismaMock } from "@/lib/__mocks__/prisma";
-import { getItemDetail, getItemStats } from "./items";
+import { getItemDetail, getItemStats, updateItem } from "./items";
 
 describe("getItemStats", () => {
   it("returns total and favorite item counts for a user", async () => {
@@ -79,5 +79,96 @@ describe("getItemDetail", () => {
     const detail = await getItemDetail("user-1", "item-404");
 
     expect(detail).toBeNull();
+  });
+});
+
+describe("updateItem", () => {
+  const updatedItem = {
+    id: "item-1",
+    title: "Updated title",
+    description: "Updated description",
+    contentType: "TEXT" as const,
+    content: "console.log('updated')",
+    fileUrl: null,
+    fileName: null,
+    fileSize: null,
+    url: null,
+    language: "javascript",
+    isFavorite: false,
+    isPinned: false,
+    createdAt: new Date("2026-01-01T00:00:00Z"),
+    updatedAt: new Date("2026-01-03T00:00:00Z"),
+    itemType: { id: "type-1", name: "snippet", icon: "Code", color: "#3b82f6" },
+    tags: [{ name: "react" }],
+    collections: [],
+  };
+
+  it("returns null when the item doesn't exist or belongs to another user", async () => {
+    prismaMock.item.findFirst.mockResolvedValueOnce(null);
+
+    const result = await updateItem("user-1", "item-404", {
+      title: "New title",
+      description: null,
+      content: null,
+      url: null,
+      language: null,
+      tags: [],
+    });
+
+    expect(result).toBeNull();
+    expect(prismaMock.item.update).not.toHaveBeenCalled();
+  });
+
+  it("updates the item's fields and replaces its tags", async () => {
+    prismaMock.item.findFirst.mockResolvedValueOnce({ id: "item-1" } as never);
+    prismaMock.item.update.mockResolvedValueOnce(updatedItem);
+
+    const result = await updateItem("user-1", "item-1", {
+      title: "Updated title",
+      description: "Updated description",
+      content: "console.log('updated')",
+      url: null,
+      language: "javascript",
+      tags: ["react"],
+    });
+
+    expect(prismaMock.item.update).toHaveBeenCalledWith({
+      where: { id: "item-1" },
+      data: {
+        title: "Updated title",
+        description: "Updated description",
+        content: "console.log('updated')",
+        url: null,
+        language: "javascript",
+        tags: {
+          set: [],
+          connectOrCreate: [{ where: { name: "react" }, create: { name: "react" } }],
+        },
+      },
+      include: {
+        itemType: true,
+        tags: true,
+        collections: { include: { collection: true } },
+      },
+    });
+    expect(result).toEqual({
+      id: "item-1",
+      title: "Updated title",
+      description: "Updated description",
+      contentType: "TEXT",
+      content: "console.log('updated')",
+      fileUrl: null,
+      fileName: null,
+      fileSize: null,
+      url: null,
+      language: "javascript",
+      isFavorite: false,
+      isPinned: false,
+      createdAt: updatedItem.createdAt,
+      updatedAt: updatedItem.updatedAt,
+      tags: ["react"],
+      itemType: updatedItem.itemType,
+      collections: [],
+    });
   });
 });

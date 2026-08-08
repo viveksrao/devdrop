@@ -1,16 +1,30 @@
-# Current Feature
+# Current Feature: Item Drawer — Edit Mode
 
 ## Status
 
-<!-- Not Started | In Progress | Complete -->
+In Progress
 
 ## Goals
 
-<!-- Bullet points of what success looks like -->
+- Edit button in the item drawer's action bar toggles the drawer into inline edit mode (same drawer, no navigation)
+- In edit mode, the action bar is replaced with Save and Cancel buttons
+- Cancel discards changes and returns to view mode
+- Save persists changes via a new `updateItem` server action, returns to view mode, and refreshes the drawer data
+- Toast notification on save success or error
+- Editable fields (all types): Title (required text input), Description (optional textarea), Tags (comma-separated text input → tag array on save)
+- Editable fields (type-specific, only shown for relevant type): Content (textarea) for snippet/prompt/command/note; Language (text input) for snippet/command; URL (text input) for link
+- Non-editable in edit mode (display only): item type, collections, created/updated dates
 
 ## Notes
 
-<!-- Additional context, constraints, or details from spec -->
+- Zod schema validates the update payload server-side (source of truth): `title` non-empty trimmed string; `description`/`content`/`url`/`language` optional string or null; `url` must be a valid URL string when present; `tags` array of trimmed non-empty strings
+- Return Zod errors via `{ success: false, error }` so the client can display them
+- `updateItem(itemId, data)` in `src/actions/items.ts`, following the existing `{ success, data, error }` action pattern: validates with Zod, gets session via `auth()`, validates ownership, calls the query function
+- Query function `updateItem` in `src/lib/db/items.ts`; tag handling on update is disconnect-all-then-connect-or-create; returns the updated `ItemDetail` so the drawer can refresh without a second fetch
+- No form library — controlled inputs with local state
+- Client-side: disable Save when title is empty (basic UX guard only, Zod is the source of truth)
+- Content textarea does not need to be a code editor (later work)
+- After save, call `router.refresh()` so the underlying card list reflects changes
 
 ## History
 
