@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { CodeEditor } from "@/components/dashboard/CodeEditor";
+import { MarkdownEditor } from "@/components/dashboard/MarkdownEditor";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { ITEM_TYPE_ICONS, ITEM_TYPE_LABELS } from "@/lib/constants/item-types";
@@ -26,6 +27,7 @@ type CreatableType = (typeof CREATABLE_TYPES)[number];
 const TEXT_CONTENT_TYPES = new Set<CreatableType>(["snippet", "prompt", "command", "note"]);
 const LANGUAGE_TYPES = new Set<CreatableType>(["snippet", "command"]);
 const CODE_TYPES = new Set<CreatableType>(["snippet", "command"]);
+const MARKDOWN_TYPES = new Set<CreatableType>(["note", "prompt"]);
 
 interface FormState {
   title: string;
@@ -158,6 +160,11 @@ export function CreateItemDialog({ open, onOpenChange }: CreateItemDialogProps) 
                   value={form.content}
                   onChange={(value) => setForm({ ...form, content: value })}
                   language={form.language}
+                />
+              ) : MARKDOWN_TYPES.has(itemTypeName) ? (
+                <MarkdownEditor
+                  value={form.content}
+                  onChange={(value) => setForm({ ...form, content: value })}
                 />
               ) : (
                 <Textarea

@@ -16,6 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { CodeEditor } from "@/components/dashboard/CodeEditor";
+import { MarkdownEditor } from "@/components/dashboard/MarkdownEditor";
 import { Label } from "@/components/ui/label";
 import {
   AlertDialog,
@@ -35,6 +36,7 @@ import { updateItem, deleteItem } from "@/actions/items";
 const TEXT_CONTENT_TYPES = new Set(["snippet", "prompt", "command", "note"]);
 const LANGUAGE_TYPES = new Set(["snippet", "command"]);
 const CODE_TYPES = new Set(["snippet", "command"]);
+const MARKDOWN_TYPES = new Set(["note", "prompt"]);
 
 interface EditFormState {
   title: string;
@@ -291,6 +293,11 @@ export function ItemDrawer({ itemId, open, onOpenChange }: ItemDrawerProps) {
                         onChange={(value) => setEditForm({ ...editForm, content: value })}
                         language={editForm.language}
                       />
+                    ) : MARKDOWN_TYPES.has(item.itemType.name) ? (
+                      <MarkdownEditor
+                        value={editForm.content}
+                        onChange={(value) => setEditForm({ ...editForm, content: value })}
+                      />
                     ) : (
                       <Textarea
                         id="edit-content"
@@ -368,6 +375,10 @@ export function ItemDrawer({ itemId, open, onOpenChange }: ItemDrawerProps) {
                     {CODE_TYPES.has(item.itemType.name) ? (
                       <div className="mt-1.5">
                         <CodeEditor value={item.content} language={item.language} readOnly />
+                      </div>
+                    ) : MARKDOWN_TYPES.has(item.itemType.name) ? (
+                      <div className="mt-1.5">
+                        <MarkdownEditor value={item.content} readOnly />
                       </div>
                     ) : (
                       <pre className="mt-1.5 min-w-0 overflow-x-auto rounded-lg bg-muted p-3 font-mono text-xs">
