@@ -1,32 +1,20 @@
-# Current Feature: Item Create
+# Current Feature
 
 ## Status
 
-In Progress
-
 ## Goals
 
-- Add new items via a modal dialog, opened from the "New Item" button in the top bar
-- Use the shadcn Dialog component
-- Type selector for snippet, prompt, command, note, link
-- Fields shown conditionally based on selected type:
-  - All types: title (required), description, tags
-  - snippet/command: content, language
-  - prompt/note: content
-  - link: URL (required)
-- `createItem` server action with Zod validation
-- `createItem` query function in `lib/db/items.ts`
-- Toast on success, close modal and refresh
+<!-- Bullet points of what success looks like -->
 
 ## Notes
 
-- Source spec: @context/features/item-create-spec.md
-- File and Image types are Pro-only and out of scope for this dialog (per project overview, type selector only covers snippet/prompt/command/note/link)
-- Should follow the existing `updateItem`/`deleteItem` patterns already established in `src/actions/items.ts` and `src/lib/db/items.ts` (auth-gated via `auth()`, `{ success, data, error }` pattern)
+<!-- Additional context, constraints, or details from spec -->
 
 ## History
 
 <!-- Keep this updated. Earliest to latest -->
+- 2026-08-15 - Item Create completed: shadcn `Dialog`-based "New item" modal opened from the top bar button; `createItem(userId, data)` added to `src/lib/db/items.ts` (resolves the `ItemType` by name scoped to system types, derives `contentType` — `URL` for link, `TEXT` otherwise — creates the item with `connectOrCreate` tags, returns the full `ItemDetail`); `createItem(data)` server action added to `src/actions/items.ts` (Zod schema restricting `itemTypeName` to the five creatable types — snippet/prompt/command/note/link, File and Image excluded as Pro-only — with a `refine` requiring/validating `url` only for link, auth-gated via `auth()`, `{ success, data, error }` pattern mirroring `updateItem`/`deleteItem`); new `CreateItemDialog` component renders a segmented type selector (icon + label per type, mirroring the sidebar's type styling) with Title/Description/Tags always shown plus Content for snippet/prompt/command/note, Language for snippet/command, and URL for link — same conditional-field logic and comma-separated tags convention as `ItemDrawer`'s edit mode; dialog open state lives in `DashboardShell` alongside the existing mobile-sidebar state, passed down to `DashboardTopBar`'s "New item" button via a new `onNewItem` prop; on success shows a `sonner` toast, closes the dialog, and calls `router.refresh()` so the dashboard/sidebar counts and `/items/[type]` grids pick up the new item; verified `npm run lint`, `npm test` (29 passing, new `createItem` coverage in both `src/lib/db/items.test.ts` and `src/actions/items.test.ts`), and `npm run build` all pass, and in-browser via Playwright that creating a Note (Content, no Language/URL) and a Link (URL required, Create button gated until filled) both work end-to-end — dialog fields switch correctly per type, sidebar counts and Total items stat update, the new items appear in Recent Items and open correctly in the existing `ItemDrawer` — then cleaned up both test items via the existing delete flow (see @context/features/item-create-spec.md)
+
 - 2026-08-15 - Item Delete completed: wired up the previously-inert Delete button in the Item Drawer's action bar; `deleteItem(userId, itemId)` added to `src/lib/db/items.ts` (ownership-scoped `findFirst` before `prisma.item.delete`, returns `boolean`, mirroring `updateItem`'s not-found/cross-user handling); `deleteItem(itemId)` server action added to `src/actions/items.ts` (auth-gated via `auth()`, `{ success, error? }` pattern, no Zod schema needed since there's no payload); `ItemDrawer`'s Delete button now triggers a shadcn `AlertDialog` (`src/components/ui/alert-dialog.tsx`, already installed for `DeleteAccountDialog`) naming the item title in the description, Cancel/Delete footer — simpler than `DeleteAccountDialog`'s typed-confirmation pattern since that friction level was specific to account deletion; confirming calls the action, shows a `sonner` toast (`"Item deleted"` / error), closes the drawer via the existing `onOpenChange` prop, and calls `router.refresh()` so the dashboard/`/items/[type]` grids and sidebar counts drop the deleted item — same mechanism `updateItem`'s save flow already uses; no schema changes (cascade already existed via `onDelete: Cascade`); verified `npm run lint`, `npm test` (23 passing, new `deleteItem` coverage in both `src/lib/db/items.test.ts` and `src/actions/items.test.ts` mirroring the existing `updateItem` tests), and `npm run build` all pass, and in-browser via Playwright that Delete → confirm removes the item from the drawer, Recent Items, and updates the sidebar type count + collection item count + Total items stat in one pass, and Delete → Cancel leaves the item and drawer untouched with no console errors
 
 - 2026-08-08 - Item Drawer — Edit Mode completed: Edit button in the item drawer's action bar toggles the same drawer into inline edit mode instead of navigating away; action bar is replaced with Save/Cancel while editing; `updateItem` query function added to `src/lib/db/items.ts` (ownership-scoped lookup, tag handling is disconnect-all-then-connectOrCreate, returns the refreshed `ItemDetail`); `updateItem(itemId, data)` server action added at `src/actions/items.ts` — the project's first server action — validating the payload with Zod (`title` required trimmed string, `description`/`content`/`url`/`language` optional nullable strings, `url` validated as a URL when present, `tags` array of trimmed non-empty strings), checking the session via `auth()`, and following the existing `{ success, data, error }` pattern; `ItemDrawer` renders Title/Description/Tags inputs for all types plus Content (textarea) for snippet/prompt/command/note, Language for snippet/command, and URL for link, while item type/collections/timestamps stay read-only; Cancel discards local edits and returns to view mode; Save calls the action, shows a `sonner` toast on success/error, updates the drawer from the returned `ItemDetail` without a second fetch, and calls `router.refresh()` so the underlying card grid picks up the change; added the shadcn `textarea` component; avoided a `react-hooks/set-state-in-effect` lint error by resetting edit state via an explicit `handleOpenChange` wrapper on close and a render-time itemId comparison when switching items mid-session, rather than a `setState` inside `useEffect`; verified `npm run lint`, `npm test` (18 passing, new tests covering `updateItem` in both `src/lib/db/items.test.ts` and `src/actions/items.test.ts`), and `npm run build` all pass, and in-browser via Playwright that edit → save updates the drawer and the Recent Items card, edit → cancel discards changes, and a link-type item correctly shows the URL field in place of Content/Language (see @context/features/item-drawer-edit-spec.md)
