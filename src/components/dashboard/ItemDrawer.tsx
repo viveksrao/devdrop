@@ -16,9 +16,20 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { ITEM_TYPE_ICONS, ITEM_TYPE_LABELS } from "@/lib/constants/item-types";
 import type { ItemDetail } from "@/lib/db/items";
-import { updateItem } from "@/actions/items";
+import { updateItem, deleteItem } from "@/actions/items";
 
 const TEXT_CONTENT_TYPES = new Set(["snippet", "prompt", "command", "note"]);
 const LANGUAGE_TYPES = new Set(["snippet", "command"]);
@@ -57,6 +68,7 @@ export function ItemDrawer({ itemId, open, onOpenChange }: ItemDrawerProps) {
   const [editForm, setEditForm] = useState<EditFormState | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [editingForItemId, setEditingForItemId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   if (isEditing && editingForItemId !== itemId) {
     setIsEditing(false);
@@ -146,6 +158,25 @@ export function ItemDrawer({ itemId, open, onOpenChange }: ItemDrawerProps) {
     router.refresh();
   }
 
+  async function handleDelete() {
+    if (!item) return;
+
+    setIsDeleting(true);
+
+    const result = await deleteItem(item.id);
+
+    setIsDeleting(false);
+
+    if (!result.success) {
+      toast.error(result.error ?? "Failed to delete item");
+      return;
+    }
+
+    toast.success("Item deleted");
+    onOpenChange(false);
+    router.refresh();
+  }
+
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetContent
@@ -199,10 +230,33 @@ export function ItemDrawer({ itemId, open, onOpenChange }: ItemDrawerProps) {
                   <Pin />
                   Pin
                 </Button>
-                <Button variant="ghost" size="sm" className="ml-auto text-destructive">
-                  <Trash2 />
-                  Delete
-                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger
+                    render={<Button variant="ghost" size="sm" className="ml-auto text-destructive" />}
+                  >
+                    <Trash2 />
+                    Delete
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete item</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This permanently deletes &ldquo;{item.title}&rdquo;. This action cannot be
+                        undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        variant="destructive"
+                        disabled={isDeleting}
+                        onClick={handleDelete}
+                      >
+                        {isDeleting ? "Deleting..." : "Delete"}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             )}
 

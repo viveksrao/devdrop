@@ -2,16 +2,21 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 
 const mockAuth = vi.fn();
 const mockUpdateItemInDb = vi.fn();
+const mockDeleteItemInDb = vi.fn();
 
 vi.mock("@/auth", () => ({ auth: mockAuth }));
-vi.mock("@/lib/db/items", () => ({ updateItem: mockUpdateItemInDb }));
+vi.mock("@/lib/db/items", () => ({
+  updateItem: mockUpdateItemInDb,
+  deleteItem: mockDeleteItemInDb,
+}));
 
-const { updateItem } = await import("./items");
+const { updateItem, deleteItem } = await import("./items");
 
 describe("updateItem action", () => {
   beforeEach(() => {
     mockAuth.mockReset();
     mockUpdateItemInDb.mockReset();
+    mockDeleteItemInDb.mockReset();
   });
 
   it("returns a validation error when title is empty", async () => {
@@ -98,5 +103,41 @@ describe("updateItem action", () => {
       tags: ["a", "b"],
     });
     expect(result).toEqual({ success: true, data: updated });
+  });
+});
+
+describe("deleteItem action", () => {
+  beforeEach(() => {
+    mockAuth.mockReset();
+    mockUpdateItemInDb.mockReset();
+    mockDeleteItemInDb.mockReset();
+  });
+
+  it("returns Unauthorized when there is no session", async () => {
+    mockAuth.mockResolvedValueOnce(null);
+
+    const result = await deleteItem("item-1");
+
+    expect(result).toEqual({ success: false, error: "Unauthorized" });
+    expect(mockDeleteItemInDb).not.toHaveBeenCalled();
+  });
+
+  it("returns an error when the item isn't found or owned by another user", async () => {
+    mockAuth.mockResolvedValueOnce({ user: { id: "user-1" } });
+    mockDeleteItemInDb.mockResolvedValueOnce(false);
+
+    const result = await deleteItem("item-404");
+
+    expect(result).toEqual({ success: false, error: "Item not found" });
+  });
+
+  it("validates ownership via session and deletes the item", async () => {
+    mockAuth.mockResolvedValueOnce({ user: { id: "user-1" } });
+    mockDeleteItemInDb.mockResolvedValueOnce(true);
+
+    const result = await deleteItem("item-1");
+
+    expect(mockDeleteItemInDb).toHaveBeenCalledWith("user-1", "item-1");
+    expect(result).toEqual({ success: true });
   });
 });

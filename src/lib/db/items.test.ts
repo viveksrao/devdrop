@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { prismaMock } from "@/lib/__mocks__/prisma";
-import { getItemDetail, getItemStats, updateItem } from "./items";
+import { deleteItem, getItemDetail, getItemStats, updateItem } from "./items";
 
 describe("getItemStats", () => {
   it("returns total and favorite item counts for a user", async () => {
@@ -170,5 +170,29 @@ describe("updateItem", () => {
       itemType: updatedItem.itemType,
       collections: [],
     });
+  });
+});
+
+describe("deleteItem", () => {
+  it("returns false when the item doesn't exist or belongs to another user", async () => {
+    prismaMock.item.findFirst.mockResolvedValueOnce(null);
+
+    const result = await deleteItem("user-1", "item-404");
+
+    expect(result).toBe(false);
+    expect(prismaMock.item.delete).not.toHaveBeenCalled();
+  });
+
+  it("deletes the item when owned by the requesting user", async () => {
+    prismaMock.item.findFirst.mockResolvedValueOnce({ id: "item-1" } as never);
+    prismaMock.item.delete.mockResolvedValueOnce({ id: "item-1" } as never);
+
+    const result = await deleteItem("user-1", "item-1");
+
+    expect(prismaMock.item.findFirst).toHaveBeenCalledWith({
+      where: { id: "item-1", userId: "user-1" },
+    });
+    expect(prismaMock.item.delete).toHaveBeenCalledWith({ where: { id: "item-1" } });
+    expect(result).toBe(true);
   });
 });
