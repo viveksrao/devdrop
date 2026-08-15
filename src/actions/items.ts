@@ -2,8 +2,35 @@
 
 import { z } from "zod";
 import { auth } from "@/auth";
-import { updateItem as updateItemInDb, deleteItem as deleteItemInDb } from "@/lib/db/items";
+import {
+  updateItem as updateItemInDb,
+  deleteItem as deleteItemInDb,
+  createItem as createItemInDb,
+} from "@/lib/db/items";
 import type { ItemDetail } from "@/lib/db/items";
+
+const CREATABLE_ITEM_TYPES = ["snippet", "prompt", "command", "note", "link"] as const;
+
+const createItemSchema = z
+  .object({
+    itemTypeName: z.enum(CREATABLE_ITEM_TYPES),
+    title: z.string().trim().min(1, "Title is required"),
+    description: z.string().trim().optional(),
+    content: z.string().trim().optional(),
+    url: z.string().trim().optional(),
+    language: z.string().trim().optional(),
+    tags: z.array(z.string().trim().min(1)),
+  })
+  .refine((data) => data.itemTypeName !== "link" || data.url, {
+    message: "URL is required",
+    path: ["url"],
+  })
+  .refine((data) => data.itemTypeName !== "link" || z.string().url().safeParse(data.url).success, {
+    message: "Invalid URL",
+    path: ["url"],
+  });
+
+export type CreateItemPayload = z.infer<typeof createItemSchema>;
 
 const updateItemSchema = z.object({
   title: z.string().trim().min(1, "Title is required"),
@@ -58,6 +85,43 @@ export async function updateItem(
     return { success: true, data: updated };
   } catch (error) {
     console.error("Failed to update item:", error);
+    return { success: false, error: "Something went wrong" };
+  }
+}
+
+export async function createItem(
+  data: CreateItemPayload
+): Promise<ActionResult<ItemDetail>> {
+  const parsed = createItemSchema.safeParse(data);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message };
+  }
+
+  const session = await auth();
+  if (!session?.user) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  try {
+    const { itemTypeName, title, description, content, url, language, tags } = parsed.data;
+
+    const created = await createItemInDb(session.user.id, {
+      itemTypeName,
+      title,
+      description: description || null,
+      content: content || null,
+      url: url || null,
+      language: language || null,
+      tags,
+    });
+
+    if (!created) {
+      return { success: false, error: "Invalid item type" };
+    }
+
+    return { success: true, data: created };
+  } catch (error) {
+    console.error("Failed to create item:", error);
     return { success: false, error: "Something went wrong" };
   }
 }

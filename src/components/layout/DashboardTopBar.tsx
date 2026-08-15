@@ -12,9 +12,10 @@ interface DashboardTopBarUser {
 interface DashboardTopBarProps {
   sidebarTrigger?: React.ReactNode;
   user: DashboardTopBarUser;
+  onNewItem?: () => void;
 }
 
-export function DashboardTopBar({ sidebarTrigger, user }: DashboardTopBarProps) {
+export function DashboardTopBar({ sidebarTrigger, user, onNewItem }: DashboardTopBarProps) {
   return (
     <header className="flex h-16 items-center justify-between gap-4 border-b border-border px-6">
       <div className="flex flex-1 items-center gap-4">
@@ -29,7 +30,7 @@ export function DashboardTopBar({ sidebarTrigger, user }: DashboardTopBarProps) 
         </div>
       </div>
       <div className="flex items-center gap-2">
-        <Button>
+        <Button onClick={onNewItem}>
           <Plus />
           New item
         </Button>

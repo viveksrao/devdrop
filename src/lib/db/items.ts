@@ -203,6 +203,77 @@ export async function updateItem(
   };
 }
 
+export interface CreateItemInput {
+  title: string;
+  description: string | null;
+  content: string | null;
+  url: string | null;
+  language: string | null;
+  tags: string[];
+  itemTypeName: string;
+}
+
+const URL_CONTENT_TYPES = new Set(["link"]);
+
+export async function createItem(
+  userId: string,
+  data: CreateItemInput
+): Promise<ItemDetail | null> {
+  const itemType = await prisma.itemType.findFirst({
+    where: { name: data.itemTypeName, isSystem: true },
+  });
+  if (!itemType) return null;
+
+  const contentType = URL_CONTENT_TYPES.has(data.itemTypeName) ? "URL" : "TEXT";
+
+  const item = await prisma.item.create({
+    data: {
+      title: data.title,
+      description: data.description,
+      contentType,
+      content: data.content,
+      url: data.url,
+      language: data.language,
+      userId,
+      itemTypeId: itemType.id,
+      tags: {
+        connectOrCreate: data.tags.map((name) => ({
+          where: { name },
+          create: { name },
+        })),
+      },
+    },
+    include: {
+      itemType: true,
+      tags: true,
+      collections: { include: { collection: true } },
+    },
+  });
+
+  return {
+    id: item.id,
+    title: item.title,
+    description: item.description,
+    contentType: item.contentType,
+    content: item.content,
+    fileUrl: item.fileUrl,
+    fileName: item.fileName,
+    fileSize: item.fileSize,
+    url: item.url,
+    language: item.language,
+    isFavorite: item.isFavorite,
+    isPinned: item.isPinned,
+    createdAt: item.createdAt,
+    updatedAt: item.updatedAt,
+    tags: item.tags.map((tag) => tag.name),
+    itemType: item.itemType,
+    collections: item.collections.map((ic) => ({
+      id: ic.collection.id,
+      name: ic.collection.name,
+    })),
+  };
+}
+
 export async function deleteItem(userId: string, itemId: string): Promise<boolean> {
   const existing = await prisma.item.findFirst({ where: { id: itemId, userId } });
   if (!existing) return false;

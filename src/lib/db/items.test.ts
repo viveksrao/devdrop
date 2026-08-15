@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { prismaMock } from "@/lib/__mocks__/prisma";
-import { deleteItem, getItemDetail, getItemStats, updateItem } from "./items";
+import { createItem, deleteItem, getItemDetail, getItemStats, updateItem } from "./items";
 
 describe("getItemStats", () => {
   it("returns total and favorite item counts for a user", async () => {
@@ -170,6 +170,144 @@ describe("updateItem", () => {
       itemType: updatedItem.itemType,
       collections: [],
     });
+  });
+});
+
+describe("createItem", () => {
+  const createdItem = {
+    id: "item-1",
+    title: "useAuth hook",
+    description: "Custom hook",
+    contentType: "TEXT" as const,
+    content: "export function useAuth() {}",
+    fileUrl: null,
+    fileName: null,
+    fileSize: null,
+    url: null,
+    language: "typescript",
+    isFavorite: false,
+    isPinned: false,
+    createdAt: new Date("2026-01-01T00:00:00Z"),
+    updatedAt: new Date("2026-01-01T00:00:00Z"),
+    itemType: { id: "type-1", name: "snippet", icon: "Code", color: "#3b82f6" },
+    tags: [{ name: "react" }],
+    collections: [],
+  };
+
+  it("returns null when the item type doesn't exist or isn't a system type", async () => {
+    prismaMock.itemType.findFirst.mockResolvedValueOnce(null);
+
+    const result = await createItem("user-1", {
+      itemTypeName: "bogus",
+      title: "Title",
+      description: null,
+      content: null,
+      url: null,
+      language: null,
+      tags: [],
+    });
+
+    expect(result).toBeNull();
+    expect(prismaMock.item.create).not.toHaveBeenCalled();
+  });
+
+  it("creates a TEXT item scoped to the user, resolving the type by name", async () => {
+    prismaMock.itemType.findFirst.mockResolvedValueOnce({
+      id: "type-1",
+      name: "snippet",
+      icon: "Code",
+      color: "#3b82f6",
+      isSystem: true,
+      userId: null,
+    });
+    prismaMock.item.create.mockResolvedValueOnce(createdItem);
+
+    const result = await createItem("user-1", {
+      itemTypeName: "snippet",
+      title: "useAuth hook",
+      description: "Custom hook",
+      content: "export function useAuth() {}",
+      url: null,
+      language: "typescript",
+      tags: ["react"],
+    });
+
+    expect(prismaMock.itemType.findFirst).toHaveBeenCalledWith({
+      where: { name: "snippet", isSystem: true },
+    });
+    expect(prismaMock.item.create).toHaveBeenCalledWith({
+      data: {
+        title: "useAuth hook",
+        description: "Custom hook",
+        contentType: "TEXT",
+        content: "export function useAuth() {}",
+        url: null,
+        language: "typescript",
+        userId: "user-1",
+        itemTypeId: "type-1",
+        tags: {
+          connectOrCreate: [{ where: { name: "react" }, create: { name: "react" } }],
+        },
+      },
+      include: {
+        itemType: true,
+        tags: true,
+        collections: { include: { collection: true } },
+      },
+    });
+    expect(result).toEqual({
+      id: "item-1",
+      title: "useAuth hook",
+      description: "Custom hook",
+      contentType: "TEXT",
+      content: "export function useAuth() {}",
+      fileUrl: null,
+      fileName: null,
+      fileSize: null,
+      url: null,
+      language: "typescript",
+      isFavorite: false,
+      isPinned: false,
+      createdAt: createdItem.createdAt,
+      updatedAt: createdItem.updatedAt,
+      tags: ["react"],
+      itemType: createdItem.itemType,
+      collections: [],
+    });
+  });
+
+  it("uses URL contentType for the link type", async () => {
+    prismaMock.itemType.findFirst.mockResolvedValueOnce({
+      id: "type-link",
+      name: "link",
+      icon: "Link",
+      color: "#10b981",
+      isSystem: true,
+      userId: null,
+    });
+    prismaMock.item.create.mockResolvedValueOnce({
+      ...createdItem,
+      contentType: "URL",
+      content: null,
+      url: "https://example.com",
+      itemType: { id: "type-link", name: "link", icon: "Link", color: "#10b981" },
+    });
+
+    await createItem("user-1", {
+      itemTypeName: "link",
+      title: "Example",
+      description: null,
+      content: null,
+      url: "https://example.com",
+      language: null,
+      tags: [],
+    });
+
+    expect(prismaMock.item.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ contentType: "URL", url: "https://example.com" }),
+      })
+    );
   });
 });
 
