@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { CodeEditor } from "@/components/dashboard/CodeEditor";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { ITEM_TYPE_ICONS, ITEM_TYPE_LABELS } from "@/lib/constants/item-types";
@@ -24,6 +25,7 @@ type CreatableType = (typeof CREATABLE_TYPES)[number];
 
 const TEXT_CONTENT_TYPES = new Set<CreatableType>(["snippet", "prompt", "command", "note"]);
 const LANGUAGE_TYPES = new Set<CreatableType>(["snippet", "command"]);
+const CODE_TYPES = new Set<CreatableType>(["snippet", "command"]);
 
 interface FormState {
   title: string;
@@ -151,12 +153,20 @@ export function CreateItemDialog({ open, onOpenChange }: CreateItemDialogProps) 
           {TEXT_CONTENT_TYPES.has(itemTypeName) && (
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="create-content">Content</Label>
-              <Textarea
-                id="create-content"
-                className="min-h-32 font-mono text-xs"
-                value={form.content}
-                onChange={(e) => setForm({ ...form, content: e.target.value })}
-              />
+              {CODE_TYPES.has(itemTypeName) ? (
+                <CodeEditor
+                  value={form.content}
+                  onChange={(value) => setForm({ ...form, content: value })}
+                  language={form.language}
+                />
+              ) : (
+                <Textarea
+                  id="create-content"
+                  className="min-h-32 font-mono text-xs"
+                  value={form.content}
+                  onChange={(e) => setForm({ ...form, content: e.target.value })}
+                />
+              )}
             </div>
           )}
 

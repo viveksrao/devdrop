@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { CodeEditor } from "@/components/dashboard/CodeEditor";
 import { Label } from "@/components/ui/label";
 import {
   AlertDialog,
@@ -33,6 +34,7 @@ import { updateItem, deleteItem } from "@/actions/items";
 
 const TEXT_CONTENT_TYPES = new Set(["snippet", "prompt", "command", "note"]);
 const LANGUAGE_TYPES = new Set(["snippet", "command"]);
+const CODE_TYPES = new Set(["snippet", "command"]);
 
 interface EditFormState {
   title: string;
@@ -283,12 +285,20 @@ export function ItemDrawer({ itemId, open, onOpenChange }: ItemDrawerProps) {
                 {TEXT_CONTENT_TYPES.has(item.itemType.name) && (
                   <div className="flex flex-col gap-1.5">
                     <Label htmlFor="edit-content">Content</Label>
-                    <Textarea
-                      id="edit-content"
-                      className="min-h-32 font-mono text-xs"
-                      value={editForm.content}
-                      onChange={(e) => setEditForm({ ...editForm, content: e.target.value })}
-                    />
+                    {CODE_TYPES.has(item.itemType.name) ? (
+                      <CodeEditor
+                        value={editForm.content}
+                        onChange={(value) => setEditForm({ ...editForm, content: value })}
+                        language={editForm.language}
+                      />
+                    ) : (
+                      <Textarea
+                        id="edit-content"
+                        className="min-h-32 font-mono text-xs"
+                        value={editForm.content}
+                        onChange={(e) => setEditForm({ ...editForm, content: e.target.value })}
+                      />
+                    )}
                   </div>
                 )}
 
@@ -353,11 +363,17 @@ export function ItemDrawer({ itemId, open, onOpenChange }: ItemDrawerProps) {
                 {item.contentType === "TEXT" && item.content && (
                   <div className="min-w-0">
                     <h3 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                      Content{item.language ? ` · ${item.language}` : ""}
+                      Content{item.language && !CODE_TYPES.has(item.itemType.name) ? ` · ${item.language}` : ""}
                     </h3>
-                    <pre className="mt-1.5 min-w-0 overflow-x-auto rounded-lg bg-muted p-3 font-mono text-xs">
-                      <code>{item.content}</code>
-                    </pre>
+                    {CODE_TYPES.has(item.itemType.name) ? (
+                      <div className="mt-1.5">
+                        <CodeEditor value={item.content} language={item.language} readOnly />
+                      </div>
+                    ) : (
+                      <pre className="mt-1.5 min-w-0 overflow-x-auto rounded-lg bg-muted p-3 font-mono text-xs">
+                        <code>{item.content}</code>
+                      </pre>
+                    )}
                   </div>
                 )}
 
