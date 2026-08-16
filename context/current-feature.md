@@ -1,57 +1,19 @@
 # Current Feature
 
-File Upload with Cloudflare R2
-
 ## Status
-
-In Progress
 
 ## Goals
 
-- Create upload API route for R2
-- Stick to lib/db/items.ts for prisma/db functions
-- Create FileUpload component with drag-and-drop
-- Update create item modal to use FileUpload for file/image types
-- Delete files from R2 when items are deleted
-- Create download proxy API route (avoids CORS issues)
-- Add download button in ItemDrawer for file types
-- Show upload progress indicator
-- Display image preview for images, file info for files
+<!-- Bullet points of what success looks like -->
 
 ## Notes
 
-File constraints:
-
-| Type   | Max Size | Extensions                                                                       |
-| ------ | -------- | --------------------------------------------------------------------------------- |
-| Images | 5 MB     | `.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`, `.svg`                                  |
-| Files  | 10 MB    | `.pdf`, `.txt`, `.md`, `.json`, `.yaml`, `.yml`, `.xml`, `.csv`, `.toml`, `.ini`   |
-
-Allowed MIME types:
-
-**Images:**
-- `image/png`
-- `image/jpeg`
-- `image/gif`
-- `image/webp`
-- `image/svg+xml`
-
-**Files:**
-- `application/pdf`
-- `text/plain`
-- `text/markdown`
-- `application/json`
-- `application/x-yaml`, `text/yaml`
-- `application/xml`, `text/xml`
-- `text/csv`
-- `application/toml`
-- `text/plain` (for `.ini`)
-
-Full spec: @context/features/file-image-spec.md
+<!-- Additional context, constraints, or details from spec -->
 
 ## History
 
 <!-- Keep this updated. Earliest to latest -->
+- 2026-08-16 - File Upload with Cloudflare R2 completed: added `src/lib/r2.ts` (S3 client singleton for R2 via `@aws-sdk/client-s3`, new dependency, with `uploadFileToR2`/`deleteFileFromR2`/`getR2KeyFromUrl`); added `src/lib/constants/file-upload.ts` (shared size/MIME/extension constraints per spec — images 5MB/`.png,.jpg,.jpeg,.gif,.webp,.svg`, files 10MB/`.pdf,.txt,.md,.json,.yaml,.yml,.xml,.csv,.toml,.ini` — plus `formatFileSize`); `POST /api/upload` validates extension/MIME/size server-side and uploads to a user-scoped R2 key; `GET /api/download/[id]` is an ownership-scoped proxy that streams the R2 object back with `Content-Disposition: attachment` (avoids CORS on direct R2 links); `createItem` in `src/lib/db/items.ts` now accepts `fileUrl`/`fileName`/`fileSize` and derives `FILE` contentType for the `file`/`image` types, and `deleteItem` now deletes the R2 object when removing a file/image item; `src/actions/items.ts` adds `file`/`image` to `CREATABLE_ITEM_TYPES` with a Zod refinement requiring `fileUrl`; new `FileUpload` component (`src/components/dashboard/FileUpload.tsx`) is a drag-and-drop dropzone using `XMLHttpRequest` for real upload-progress tracking (`fetch` can't report progress), client-side validates against the same shared constraints before uploading, and shows an image preview or generic file icon plus filename/size once uploaded; added the shadcn `progress` component for the upload bar; `CreateItemDialog` adds File/Image to its type selector, rendering `FileUpload` and gating the Create button on upload completion; `ItemDrawer`'s previously-bare FILE content block now shows an image preview (images) or file icon (files), filename, formatted size, and a working Download button wired to the proxy route — required `nativeButton={false}` on the Base UI `Button` since it renders an `<a>` via the `render` prop, a console warning caught during in-browser testing; no schema changes (`fileUrl`/`fileName`/`fileSize`/`ContentType.FILE` already existed on `Item`); verified `npm run lint`, `npm test` (44 passing, new coverage for FILE-contentType `createItem`, R2 cleanup on `deleteItem`, the `file-upload` constants, and the action-level file-required validation), and `npm run build` all pass, and in-browser via Playwright against the real R2 bucket that: an Image upload (drag-drop click-to-browse) shows a live preview with filename/size, creates successfully, and the drawer shows the image preview with a Download button that returns the exact original bytes; a File (`.txt`) upload shows a generic file icon instead of a preview and downloads correctly; deleting either item removes it from Recent Items/sidebar counts/stats with no R2-delete errors in server logs; and the dropzone correctly displays the per-type extension/size constraints (5.0 MB for images, 10.0 MB for files) (see @context/features/file-image-spec.md)
 - 2026-08-15 - Markdown Editor completed: added `MarkdownEditor` component (`src/components/dashboard/MarkdownEditor.tsx`) with a tabbed Write/Preview header matching `CodeEditor`'s dark styling (`bg-[#1e1e1e]` container, `bg-[#2d2d2d]` header, copy-to-clipboard button with checkmark feedback); renders markdown via `react-markdown` + `remark-gfm` (new dependencies) inside a new `.markdown-preview` CSS class in `globals.css` styling headings, inline/block code, ordered/unordered lists (incl. nested), blockquotes, links, and tables for dark mode; readonly mode shows only a "Preview" label (no tabs), edit mode defaults to the Write tab with Preview available; height is fluid up to a 400px max with internal scroll past that, matching `CodeEditor`; added the shadcn `tabs` component (installed but not used directly — the editor's Write/Preview toggle is a custom button pair to match `CodeEditor`'s exact header layout rather than shadcn's default tab styling); `ItemDrawer` (edit + view modes) and `CreateItemDialog` now render `MarkdownEditor` in place of `Textarea` for the `note` and `prompt` types only — `snippet`/`command` keep `CodeEditor` unchanged; no schema or server-action changes; verified `npm run lint`, `npm test` (29 passing, unchanged), and `npm run build` all pass, and in-browser via Playwright that: the `CreateItemDialog`'s Note type shows the Write/Preview editor (no macOS dots, no language field) and a full create → view → edit → save → delete round trip on a real Note with headings, bold/italic, inline code, nested lists, ordered list, blockquote, fenced code block, table, and a link all rendered correctly in Preview at every stage; readonly view correctly shows only "Preview" (no Write tab); the 400px max-height clamp and internal scroll were confirmed via `scrollHeight`/`clientHeight`; and regression-checked that an existing seeded Prompt still renders its content correctly through the new editor and an existing Snippet is unaffected, still using `CodeEditor` (see @context/features/markdown-editor-spec.md)
 - 2026-08-15 - Code Editor completed: added `CodeEditor` component (`src/components/dashboard/CodeEditor.tsx`) wrapping `@monaco-editor/react` (new dependency), dynamically imported via `next/dynamic` with `ssr: false` since Monaco requires browser APIs; header shows macOS-style traffic-light dots (red/yellow/green), the item's language, and a copy-to-clipboard button (`navigator.clipboard.writeText`, brief checkmark feedback); editor is pinned to the `vs-dark` theme regardless of app theme (matches the app's dark-mode-first design and conventional code-editor aesthetics); height is fluid and grows with content via `onDidContentSizeChange`, clamped between 100px and a 400px max with Monaco's own themed scrollbar taking over past that; supports a `readOnly` prop for display mode and an `onChange` callback for edit/create mode; language values are lowercased and mapped through a small alias table (e.g. `js`/`jsx` → `javascript`, `py` → `python`, `sh`/`bash`/`zsh` → `shell`) before being passed to Monaco, falling back to `plaintext` when no language is set; `ItemDrawer` (view + edit modes) and `CreateItemDialog` now render `CodeEditor` in place of `Textarea` for the `snippet` and `command` types only — `prompt` and `note` (and the Description field on all types) keep the existing `Textarea`; no schema or server-action changes; verified `npm run lint`, `npm test` (29 passing, unchanged — no server action/utility logic was added), and `npm run build` all pass, and in-browser via Playwright that: an existing Command item renders correctly in read-only view (dots, "bash" label, copy button, syntax highlighting); Edit mode on that item shows the same editor now editable with Save/Cancel, and Cancel correctly discards in-editor changes; a TypeScript Snippet's read-only view syntax-highlights correctly and word-wraps long lines; the height grows fluidly with content and clamps at exactly 400px (verified via bounding-rect) once content exceeds it, scrolling internally past that point; the `CreateItemDialog`'s type selector shows `CodeEditor` for Snippet/Command and correctly falls back to `Textarea` for Note (no macOS dots, no language field); and a full create → persist → reload → delete round trip on a real Snippet item confirmed the typed content and language save and reload correctly (see @context/features/code-editor-spec.md)
 - 2026-08-15 - Item Create completed: shadcn `Dialog`-based "New item" modal opened from the top bar button; `createItem(userId, data)` added to `src/lib/db/items.ts` (resolves the `ItemType` by name scoped to system types, derives `contentType` — `URL` for link, `TEXT` otherwise — creates the item with `connectOrCreate` tags, returns the full `ItemDetail`); `createItem(data)` server action added to `src/actions/items.ts` (Zod schema restricting `itemTypeName` to the five creatable types — snippet/prompt/command/note/link, File and Image excluded as Pro-only — with a `refine` requiring/validating `url` only for link, auth-gated via `auth()`, `{ success, data, error }` pattern mirroring `updateItem`/`deleteItem`); new `CreateItemDialog` component renders a segmented type selector (icon + label per type, mirroring the sidebar's type styling) with Title/Description/Tags always shown plus Content for snippet/prompt/command/note, Language for snippet/command, and URL for link — same conditional-field logic and comma-separated tags convention as `ItemDrawer`'s edit mode; dialog open state lives in `DashboardShell` alongside the existing mobile-sidebar state, passed down to `DashboardTopBar`'s "New item" button via a new `onNewItem` prop; on success shows a `sonner` toast, closes the dialog, and calls `router.refresh()` so the dashboard/sidebar counts and `/items/[type]` grids pick up the new item; verified `npm run lint`, `npm test` (29 passing, new `createItem` coverage in both `src/lib/db/items.test.ts` and `src/actions/items.test.ts`), and `npm run build` all pass, and in-browser via Playwright that creating a Note (Content, no Language/URL) and a Link (URL required, Create button gated until filled) both work end-to-end — dialog fields switch correctly per type, sidebar counts and Total items stat update, the new items appear in Recent Items and open correctly in the existing `ItemDrawer` — then cleaned up both test items via the existing delete flow (see @context/features/item-create-spec.md)
