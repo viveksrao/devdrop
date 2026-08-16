@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { deleteFileFromR2, getR2KeyFromUrl } from "@/lib/r2";
 
 export interface ItemWithType {
   id: string;
@@ -211,9 +212,19 @@ export interface CreateItemInput {
   language: string | null;
   tags: string[];
   itemTypeName: string;
+  fileUrl: string | null;
+  fileName: string | null;
+  fileSize: number | null;
 }
 
 const URL_CONTENT_TYPES = new Set(["link"]);
+const FILE_CONTENT_TYPES = new Set(["file", "image"]);
+
+function getContentType(itemTypeName: string): "TEXT" | "FILE" | "URL" {
+  if (URL_CONTENT_TYPES.has(itemTypeName)) return "URL";
+  if (FILE_CONTENT_TYPES.has(itemTypeName)) return "FILE";
+  return "TEXT";
+}
 
 export async function createItem(
   userId: string,
@@ -224,7 +235,7 @@ export async function createItem(
   });
   if (!itemType) return null;
 
-  const contentType = URL_CONTENT_TYPES.has(data.itemTypeName) ? "URL" : "TEXT";
+  const contentType = getContentType(data.itemTypeName);
 
   const item = await prisma.item.create({
     data: {
@@ -234,6 +245,9 @@ export async function createItem(
       content: data.content,
       url: data.url,
       language: data.language,
+      fileUrl: data.fileUrl,
+      fileName: data.fileName,
+      fileSize: data.fileSize,
       userId,
       itemTypeId: itemType.id,
       tags: {
@@ -279,6 +293,10 @@ export async function deleteItem(userId: string, itemId: string): Promise<boolea
   if (!existing) return false;
 
   await prisma.item.delete({ where: { id: itemId } });
+
+  if (existing.contentType === "FILE" && existing.fileUrl) {
+    await deleteFileFromR2(getR2KeyFromUrl(existing.fileUrl));
+  }
 
   return true;
 }

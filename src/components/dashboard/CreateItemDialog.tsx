@@ -16,18 +16,28 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { CodeEditor } from "@/components/dashboard/CodeEditor";
 import { MarkdownEditor } from "@/components/dashboard/MarkdownEditor";
+import { FileUpload, type UploadedFile } from "@/components/dashboard/FileUpload";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { ITEM_TYPE_ICONS, ITEM_TYPE_LABELS } from "@/lib/constants/item-types";
 import { createItem } from "@/actions/items";
 
-const CREATABLE_TYPES = ["snippet", "prompt", "command", "note", "link"] as const;
+const CREATABLE_TYPES = [
+  "snippet",
+  "prompt",
+  "command",
+  "note",
+  "link",
+  "file",
+  "image",
+] as const;
 type CreatableType = (typeof CREATABLE_TYPES)[number];
 
 const TEXT_CONTENT_TYPES = new Set<CreatableType>(["snippet", "prompt", "command", "note"]);
 const LANGUAGE_TYPES = new Set<CreatableType>(["snippet", "command"]);
 const CODE_TYPES = new Set<CreatableType>(["snippet", "command"]);
 const MARKDOWN_TYPES = new Set<CreatableType>(["note", "prompt"]);
+const FILE_TYPES = new Set<CreatableType>(["file", "image"]);
 
 interface FormState {
   title: string;
@@ -56,12 +66,14 @@ export function CreateItemDialog({ open, onOpenChange }: CreateItemDialogProps) 
   const router = useRouter();
   const [itemTypeName, setItemTypeName] = useState<CreatableType>("snippet");
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
+  const [file, setFile] = useState<UploadedFile | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   function handleOpenChange(nextOpen: boolean) {
     if (!nextOpen) {
       setItemTypeName("snippet");
       setForm(EMPTY_FORM);
+      setFile(null);
     }
     onOpenChange(nextOpen);
   }
@@ -69,6 +81,7 @@ export function CreateItemDialog({ open, onOpenChange }: CreateItemDialogProps) 
   async function handleCreate() {
     const trimmedTitle = form.title.trim();
     if (!trimmedTitle) return;
+    if (FILE_TYPES.has(itemTypeName) && !file) return;
 
     setIsSaving(true);
 
@@ -83,6 +96,9 @@ export function CreateItemDialog({ open, onOpenChange }: CreateItemDialogProps) 
         .split(",")
         .map((tag) => tag.trim())
         .filter(Boolean),
+      fileUrl: file?.fileUrl,
+      fileName: file?.fileName,
+      fileSize: file?.fileSize,
     });
 
     setIsSaving(false);
@@ -102,7 +118,9 @@ export function CreateItemDialog({ open, onOpenChange }: CreateItemDialogProps) 
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>New item</DialogTitle>
-          <DialogDescription>Add a snippet, prompt, command, note, or link.</DialogDescription>
+          <DialogDescription>
+            Add a snippet, prompt, command, note, link, file, or image.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="flex flex-col gap-4">
@@ -200,6 +218,17 @@ export function CreateItemDialog({ open, onOpenChange }: CreateItemDialogProps) 
             </div>
           )}
 
+          {FILE_TYPES.has(itemTypeName) && (
+            <div className="flex flex-col gap-1.5">
+              <Label>{itemTypeName === "image" ? "Image" : "File"}</Label>
+              <FileUpload
+                itemTypeName={itemTypeName as "file" | "image"}
+                value={file}
+                onChange={setFile}
+              />
+            </div>
+          )}
+
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="create-tags">Tags</Label>
             <Input
@@ -218,7 +247,10 @@ export function CreateItemDialog({ open, onOpenChange }: CreateItemDialogProps) 
           <Button
             onClick={handleCreate}
             disabled={
-              isSaving || !form.title.trim() || (itemTypeName === "link" && !form.url.trim())
+              isSaving ||
+              !form.title.trim() ||
+              (itemTypeName === "link" && !form.url.trim()) ||
+              (FILE_TYPES.has(itemTypeName) && !file)
             }
           >
             {isSaving ? "Creating…" : "Create"}

@@ -1,6 +1,17 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi, beforeEach } from "vitest";
 import { prismaMock } from "@/lib/__mocks__/prisma";
 import { createItem, deleteItem, getItemDetail, getItemStats, updateItem } from "./items";
+
+const mockDeleteFileFromR2 = vi.fn();
+
+vi.mock("@/lib/r2", () => ({
+  deleteFileFromR2: (...args: unknown[]) => mockDeleteFileFromR2(...args),
+  getR2KeyFromUrl: (fileUrl: string) => fileUrl.replace("https://files.example.com/", ""),
+}));
+
+beforeEach(() => {
+  mockDeleteFileFromR2.mockReset();
+});
 
 describe("getItemStats", () => {
   it("returns total and favorite item counts for a user", async () => {
@@ -205,6 +216,9 @@ describe("createItem", () => {
       url: null,
       language: null,
       tags: [],
+      fileUrl: null,
+      fileName: null,
+      fileSize: null,
     });
 
     expect(result).toBeNull();
@@ -230,6 +244,9 @@ describe("createItem", () => {
       url: null,
       language: "typescript",
       tags: ["react"],
+      fileUrl: null,
+      fileName: null,
+      fileSize: null,
     });
 
     expect(prismaMock.itemType.findFirst).toHaveBeenCalledWith({
@@ -243,6 +260,9 @@ describe("createItem", () => {
         content: "export function useAuth() {}",
         url: null,
         language: "typescript",
+        fileUrl: null,
+        fileName: null,
+        fileSize: null,
         userId: "user-1",
         itemTypeId: "type-1",
         tags: {
@@ -301,11 +321,58 @@ describe("createItem", () => {
       url: "https://example.com",
       language: null,
       tags: [],
+      fileUrl: null,
+      fileName: null,
+      fileSize: null,
     });
 
     expect(prismaMock.item.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({ contentType: "URL", url: "https://example.com" }),
+      })
+    );
+  });
+
+  it("uses FILE contentType and stores file fields for the image type", async () => {
+    prismaMock.itemType.findFirst.mockResolvedValueOnce({
+      id: "type-image",
+      name: "image",
+      icon: "Image",
+      color: "#ec4899",
+      isSystem: true,
+      userId: null,
+    });
+    prismaMock.item.create.mockResolvedValueOnce({
+      ...createdItem,
+      contentType: "FILE",
+      content: null,
+      fileUrl: "https://files.example.com/user-1/abc.png",
+      fileName: "screenshot.png",
+      fileSize: 1024,
+      itemType: { id: "type-image", name: "image", icon: "Image", color: "#ec4899" },
+    });
+
+    await createItem("user-1", {
+      itemTypeName: "image",
+      title: "Screenshot",
+      description: null,
+      content: null,
+      url: null,
+      language: null,
+      tags: [],
+      fileUrl: "https://files.example.com/user-1/abc.png",
+      fileName: "screenshot.png",
+      fileSize: 1024,
+    });
+
+    expect(prismaMock.item.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          contentType: "FILE",
+          fileUrl: "https://files.example.com/user-1/abc.png",
+          fileName: "screenshot.png",
+          fileSize: 1024,
+        }),
       })
     );
   });
@@ -322,7 +389,11 @@ describe("deleteItem", () => {
   });
 
   it("deletes the item when owned by the requesting user", async () => {
-    prismaMock.item.findFirst.mockResolvedValueOnce({ id: "item-1" } as never);
+    prismaMock.item.findFirst.mockResolvedValueOnce({
+      id: "item-1",
+      contentType: "TEXT",
+      fileUrl: null,
+    } as never);
     prismaMock.item.delete.mockResolvedValueOnce({ id: "item-1" } as never);
 
     const result = await deleteItem("user-1", "item-1");
@@ -331,6 +402,21 @@ describe("deleteItem", () => {
       where: { id: "item-1", userId: "user-1" },
     });
     expect(prismaMock.item.delete).toHaveBeenCalledWith({ where: { id: "item-1" } });
+    expect(mockDeleteFileFromR2).not.toHaveBeenCalled();
+    expect(result).toBe(true);
+  });
+
+  it("deletes the R2 object when the item is a FILE type", async () => {
+    prismaMock.item.findFirst.mockResolvedValueOnce({
+      id: "item-2",
+      contentType: "FILE",
+      fileUrl: "https://files.example.com/user-1/abc.png",
+    } as never);
+    prismaMock.item.delete.mockResolvedValueOnce({ id: "item-2" } as never);
+
+    const result = await deleteItem("user-1", "item-2");
+
+    expect(mockDeleteFileFromR2).toHaveBeenCalledWith("user-1/abc.png");
     expect(result).toBe(true);
   });
 });

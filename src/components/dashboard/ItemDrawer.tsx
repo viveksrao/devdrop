@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Copy, Pencil, Pin, Star, Trash2, X } from "lucide-react";
+import { Copy, Download, FileIcon, Pencil, Pin, Star, Trash2, X } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -30,6 +30,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { ITEM_TYPE_ICONS, ITEM_TYPE_LABELS } from "@/lib/constants/item-types";
+import { formatFileSize } from "@/lib/constants/file-upload";
 import type { ItemDetail } from "@/lib/db/items";
 import { updateItem, deleteItem } from "@/actions/items";
 
@@ -405,11 +406,40 @@ export function ItemDrawer({ itemId, open, onOpenChange }: ItemDrawerProps) {
                 )}
 
                 {item.contentType === "FILE" && item.fileName && (
-                  <div>
+                  <div className="min-w-0">
                     <h3 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                      File
+                      {item.itemType.name === "image" ? "Image" : "File"}
                     </h3>
-                    <p className="mt-1.5 text-sm">{item.fileName}</p>
+                    <div className="mt-1.5 flex items-center gap-3 rounded-md border border-border p-3">
+                      {item.itemType.name === "image" && item.fileUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={item.fileUrl}
+                          alt={item.fileName}
+                          className="size-12 shrink-0 rounded object-cover"
+                        />
+                      ) : (
+                        <FileIcon className="size-8 shrink-0 text-muted-foreground" />
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium">{item.fileName}</p>
+                        {item.fileSize !== null && (
+                          <p className="text-xs text-muted-foreground">
+                            {formatFileSize(item.fileSize)}
+                          </p>
+                        )}
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="shrink-0"
+                        nativeButton={false}
+                        render={<a href={`/api/download/${item.id}`} />}
+                      >
+                        <Download />
+                        Download
+                      </Button>
+                    </div>
                   </div>
                 )}
 

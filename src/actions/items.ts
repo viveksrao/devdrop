@@ -9,7 +9,17 @@ import {
 } from "@/lib/db/items";
 import type { ItemDetail } from "@/lib/db/items";
 
-const CREATABLE_ITEM_TYPES = ["snippet", "prompt", "command", "note", "link"] as const;
+const CREATABLE_ITEM_TYPES = [
+  "snippet",
+  "prompt",
+  "command",
+  "note",
+  "link",
+  "file",
+  "image",
+] as const;
+
+const FILE_ITEM_TYPES = new Set(["file", "image"]);
 
 const createItemSchema = z
   .object({
@@ -20,6 +30,9 @@ const createItemSchema = z
     url: z.string().trim().optional(),
     language: z.string().trim().optional(),
     tags: z.array(z.string().trim().min(1)),
+    fileUrl: z.string().trim().optional(),
+    fileName: z.string().trim().optional(),
+    fileSize: z.number().int().positive().optional(),
   })
   .refine((data) => data.itemTypeName !== "link" || data.url, {
     message: "URL is required",
@@ -28,6 +41,10 @@ const createItemSchema = z
   .refine((data) => data.itemTypeName !== "link" || z.string().url().safeParse(data.url).success, {
     message: "Invalid URL",
     path: ["url"],
+  })
+  .refine((data) => !FILE_ITEM_TYPES.has(data.itemTypeName) || data.fileUrl, {
+    message: "File is required",
+    path: ["fileUrl"],
   });
 
 export type CreateItemPayload = z.infer<typeof createItemSchema>;
@@ -103,7 +120,18 @@ export async function createItem(
   }
 
   try {
-    const { itemTypeName, title, description, content, url, language, tags } = parsed.data;
+    const {
+      itemTypeName,
+      title,
+      description,
+      content,
+      url,
+      language,
+      tags,
+      fileUrl,
+      fileName,
+      fileSize,
+    } = parsed.data;
 
     const created = await createItemInDb(session.user.id, {
       itemTypeName,
@@ -113,6 +141,9 @@ export async function createItem(
       url: url || null,
       language: language || null,
       tags,
+      fileUrl: fileUrl || null,
+      fileName: fileName || null,
+      fileSize: fileSize ?? null,
     });
 
     if (!created) {

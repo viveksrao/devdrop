@@ -249,6 +249,9 @@ describe("createItem action", () => {
       url: null,
       language: "typescript",
       tags: ["a", "b"],
+      fileUrl: null,
+      fileName: null,
+      fileSize: null,
     });
     expect(result).toEqual({ success: true, data: created });
   });
@@ -273,6 +276,49 @@ describe("createItem action", () => {
       url: "https://example.com",
       language: null,
       tags: [],
+      fileUrl: null,
+      fileName: null,
+      fileSize: null,
+    });
+    expect(result).toEqual({ success: true, data: created });
+  });
+
+  it("requires a file for file/image items", async () => {
+    const result = await createItem({
+      itemTypeName: "image",
+      title: "Screenshot",
+      tags: [],
+    });
+
+    expect(result).toEqual({ success: false, error: "File is required" });
+    expect(mockCreateItemInDb).not.toHaveBeenCalled();
+  });
+
+  it("creates an image item with file metadata", async () => {
+    mockAuth.mockResolvedValueOnce({ user: { id: "user-1" } });
+    const created = { id: "item-3", title: "Screenshot" };
+    mockCreateItemInDb.mockResolvedValueOnce(created);
+
+    const result = await createItem({
+      itemTypeName: "image",
+      title: "Screenshot",
+      tags: [],
+      fileUrl: "https://files.example.com/user-1/abc.png",
+      fileName: "screenshot.png",
+      fileSize: 1024,
+    });
+
+    expect(mockCreateItemInDb).toHaveBeenCalledWith("user-1", {
+      itemTypeName: "image",
+      title: "Screenshot",
+      description: null,
+      content: null,
+      url: null,
+      language: null,
+      tags: [],
+      fileUrl: "https://files.example.com/user-1/abc.png",
+      fileName: "screenshot.png",
+      fileSize: 1024,
     });
     expect(result).toEqual({ success: true, data: created });
   });
