@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { DashboardShell } from "@/components/layout/DashboardShell";
 import { ItemCard } from "@/components/dashboard/ItemCard";
+import { ImageCard } from "@/components/dashboard/ImageCard";
 import { getItemTypeNameFromSlug, ITEM_TYPE_LABELS } from "@/lib/constants/item-types";
 import { getItemsByType, getSystemItemTypes } from "@/lib/db/items";
 import { getRecentCollections } from "@/lib/db/collections";
@@ -55,6 +56,12 @@ export default async function ItemsByTypePage({ params }: ItemsByTypePageProps) 
           <p className="text-sm text-muted-foreground">
             No {label.toLowerCase()} yet.
           </p>
+        ) : typeName === "image" ? (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {items.map((item) => (
+              <ImageCard key={item.id} item={item} />
+            ))}
+          </div>
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {items.map((item) => (
