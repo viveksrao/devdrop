@@ -26,12 +26,18 @@ export async function getRecentCollections(
     where: { userId },
     orderBy: { updatedAt: "desc" },
     take: limit,
-    include: {
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      isFavorite: true,
       items: {
-        include: {
+        select: {
           item: {
-            include: {
-              itemType: true,
+            select: {
+              itemType: {
+                select: { name: true, icon: true, color: true },
+              },
             },
           },
         },
