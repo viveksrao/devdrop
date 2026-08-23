@@ -295,6 +295,7 @@ describe("createItem action", () => {
   });
 
   it("creates an image item with file metadata", async () => {
+    vi.stubEnv("R2_PUBLIC_URL", "https://files.example.com");
     mockAuth.mockResolvedValueOnce({ user: { id: "user-1" } });
     const created = { id: "item-3", title: "Screenshot" };
     mockCreateItemInDb.mockResolvedValueOnce(created);
@@ -321,5 +322,42 @@ describe("createItem action", () => {
       fileSize: 1024,
     });
     expect(result).toEqual({ success: true, data: created });
+    vi.unstubAllEnvs();
+  });
+
+  it("rejects a fileUrl that isn't scoped to the current user's R2 prefix", async () => {
+    vi.stubEnv("R2_PUBLIC_URL", "https://files.example.com");
+    mockAuth.mockResolvedValueOnce({ user: { id: "user-1" } });
+
+    const result = await createItem({
+      itemTypeName: "image",
+      title: "Screenshot",
+      tags: [],
+      fileUrl: "https://files.example.com/user-2/abc.png",
+      fileName: "screenshot.png",
+      fileSize: 1024,
+    });
+
+    expect(result).toEqual({ success: false, error: "Invalid file" });
+    expect(mockCreateItemInDb).not.toHaveBeenCalled();
+    vi.unstubAllEnvs();
+  });
+
+  it("rejects a fileUrl pointing at an arbitrary external host", async () => {
+    vi.stubEnv("R2_PUBLIC_URL", "https://files.example.com");
+    mockAuth.mockResolvedValueOnce({ user: { id: "user-1" } });
+
+    const result = await createItem({
+      itemTypeName: "image",
+      title: "Screenshot",
+      tags: [],
+      fileUrl: "https://internal.attacker.example/secrets",
+      fileName: "screenshot.png",
+      fileSize: 1024,
+    });
+
+    expect(result).toEqual({ success: false, error: "Invalid file" });
+    expect(mockCreateItemInDb).not.toHaveBeenCalled();
+    vi.unstubAllEnvs();
   });
 });

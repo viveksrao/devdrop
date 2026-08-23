@@ -133,6 +133,13 @@ export async function createItem(
       fileSize,
     } = parsed.data;
 
+    if (FILE_ITEM_TYPES.has(itemTypeName) && fileUrl) {
+      const expectedPrefix = `${process.env.R2_PUBLIC_URL}/${session.user.id}/`;
+      if (!fileUrl.startsWith(expectedPrefix)) {
+        return { success: false, error: "Invalid file" };
+      }
+    }
+
     const created = await createItemInDb(session.user.id, {
       itemTypeName,
       title,
