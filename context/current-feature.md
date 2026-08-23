@@ -1,12 +1,26 @@
-# Current Feature
+# Current Feature: Quick Copy Icon on Cards
 
 ## Status
 
+In Progress
+
 ## Goals
 
-<!-- Bullet points of what success looks like -->
+- Add a quick-copy icon button to `ItemCard` (dashboard + `/items/[type]` grids)
+- Clicking it copies the item's main value to the clipboard without opening the drawer:
+  - snippet/prompt/command/note → `content`
+  - link → `url`
+- Button click must stop propagation so it doesn't also open the `ItemDrawer`
+- Brief visual feedback on copy (e.g. checkmark), matching the pattern used in `CodeEditor`/`MarkdownEditor`'s copy button
+- Toast or inline feedback if copy fails
 
 ## Notes
+
+- Scope is `ItemCard` only — `ImageCard` and `FileListItem` (file/image types) are excluded, since "copy content" isn't meaningful for binary files; those already have Download actions
+- `ItemWithType` (the shape used by list/grid queries) does not include `content`/`url` — only `ItemDetail` (fetched on-demand for the drawer via `GET /api/items/[id]`) has it
+- Decision: fetch on click via the existing `GET /api/items/[id]` route rather than widening `ItemWithType`/listing queries — keeps list queries light, adds one request only when the user actually copies
+- The drawer's own "Copy" button (`ItemDrawer.tsx`) is currently inert/unwired (a pre-existing placeholder from the original Item Drawer spec) — out of scope for this feature, but worth noting it exists and could reuse the same copy logic later
+- Icon should be `Copy` from `lucide-react`, consistent with existing usage in `ItemDrawer`/`CodeEditor`/`MarkdownEditor`
 
 <!-- Additional context, constraints, or details from spec -->
 
