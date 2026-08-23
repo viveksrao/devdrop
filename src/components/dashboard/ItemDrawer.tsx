@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Check, Copy, Download, FileIcon, Pencil, Pin, Star, Trash2, X } from "lucide-react";
+import { Check, Copy, Pencil, Pin, Star, Trash2, X } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -11,13 +11,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { CodeEditor } from "@/components/dashboard/CodeEditor";
-import { MarkdownEditor } from "@/components/dashboard/MarkdownEditor";
-import { Label } from "@/components/ui/label";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,26 +23,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { ItemEditForm, type ItemEditFormState } from "@/components/dashboard/ItemEditForm";
+import { ItemDetailView } from "@/components/dashboard/ItemDetailView";
 import { ITEM_TYPE_ICONS, ITEM_TYPE_LABELS } from "@/lib/constants/item-types";
-import { formatFileSize } from "@/lib/constants/file-upload";
 import type { ItemDetail } from "@/lib/db/items";
 import { updateItem, deleteItem } from "@/actions/items";
 
-const TEXT_CONTENT_TYPES = new Set(["snippet", "prompt", "command", "note"]);
-const LANGUAGE_TYPES = new Set(["snippet", "command"]);
-const CODE_TYPES = new Set(["snippet", "command"]);
-const MARKDOWN_TYPES = new Set(["note", "prompt"]);
-
-interface EditFormState {
-  title: string;
-  description: string;
-  content: string;
-  url: string;
-  language: string;
-  tags: string;
-}
-
-function toEditFormState(item: ItemDetail): EditFormState {
+function toEditFormState(item: ItemDetail): ItemEditFormState {
   return {
     title: item.title,
     description: item.description ?? "",
@@ -70,7 +51,7 @@ export function ItemDrawer({ itemId, open, onOpenChange }: ItemDrawerProps) {
   const [item, setItem] = useState<ItemDetail | null>(null);
   const [loadedItemId, setLoadedItemId] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [editForm, setEditForm] = useState<EditFormState | null>(null);
+  const [editForm, setEditForm] = useState<ItemEditFormState | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [editingForItemId, setEditingForItemId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -283,213 +264,14 @@ export function ItemDrawer({ itemId, open, onOpenChange }: ItemDrawerProps) {
             )}
 
             {isEditing && editForm ? (
-              <div className="flex min-w-0 flex-col gap-4 overflow-y-auto px-4 pb-4">
-                <div className="flex flex-col gap-1.5">
-                  <Label htmlFor="edit-title">Title</Label>
-                  <Input
-                    id="edit-title"
-                    value={editForm.title}
-                    onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
-                  />
-                </div>
-
-                <div className="flex flex-col gap-1.5">
-                  <Label htmlFor="edit-description">Description</Label>
-                  <Textarea
-                    id="edit-description"
-                    value={editForm.description}
-                    onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-                  />
-                </div>
-
-                {TEXT_CONTENT_TYPES.has(item.itemType.name) && (
-                  <div className="flex flex-col gap-1.5">
-                    <Label htmlFor="edit-content">Content</Label>
-                    {CODE_TYPES.has(item.itemType.name) ? (
-                      <CodeEditor
-                        value={editForm.content}
-                        onChange={(value) => setEditForm({ ...editForm, content: value })}
-                        language={editForm.language}
-                      />
-                    ) : MARKDOWN_TYPES.has(item.itemType.name) ? (
-                      <MarkdownEditor
-                        value={editForm.content}
-                        onChange={(value) => setEditForm({ ...editForm, content: value })}
-                      />
-                    ) : (
-                      <Textarea
-                        id="edit-content"
-                        className="min-h-32 font-mono text-xs"
-                        value={editForm.content}
-                        onChange={(e) => setEditForm({ ...editForm, content: e.target.value })}
-                      />
-                    )}
-                  </div>
-                )}
-
-                {LANGUAGE_TYPES.has(item.itemType.name) && (
-                  <div className="flex flex-col gap-1.5">
-                    <Label htmlFor="edit-language">Language</Label>
-                    <Input
-                      id="edit-language"
-                      value={editForm.language}
-                      onChange={(e) => setEditForm({ ...editForm, language: e.target.value })}
-                    />
-                  </div>
-                )}
-
-                {item.itemType.name === "link" && (
-                  <div className="flex flex-col gap-1.5">
-                    <Label htmlFor="edit-url">URL</Label>
-                    <Input
-                      id="edit-url"
-                      value={editForm.url}
-                      onChange={(e) => setEditForm({ ...editForm, url: e.target.value })}
-                    />
-                  </div>
-                )}
-
-                <div className="flex flex-col gap-1.5">
-                  <Label htmlFor="edit-tags">Tags</Label>
-                  <Input
-                    id="edit-tags"
-                    placeholder="Comma-separated"
-                    value={editForm.tags}
-                    onChange={(e) => setEditForm({ ...editForm, tags: e.target.value })}
-                  />
-                </div>
-
-                {item.collections.length > 0 && (
-                  <div>
-                    <h3 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                      Collections
-                    </h3>
-                    <div className="mt-1.5 flex flex-wrap gap-1.5">
-                      {item.collections.map((collection) => (
-                        <Badge key={collection.id} variant="outline">
-                          {collection.name}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
+              <ItemEditForm
+                itemType={item.itemType}
+                collections={item.collections}
+                form={editForm}
+                onChange={setEditForm}
+              />
             ) : (
-              <div className="flex min-w-0 flex-col gap-4 overflow-y-auto px-4 pb-4">
-                {item.description && (
-                  <div>
-                    <h3 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                      Description
-                    </h3>
-                    <p className="mt-1.5 text-sm">{item.description}</p>
-                  </div>
-                )}
-
-                {item.contentType === "TEXT" && item.content && (
-                  <div className="min-w-0">
-                    <h3 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                      Content{item.language && !CODE_TYPES.has(item.itemType.name) ? ` · ${item.language}` : ""}
-                    </h3>
-                    {CODE_TYPES.has(item.itemType.name) ? (
-                      <div className="mt-1.5">
-                        <CodeEditor value={item.content} language={item.language} readOnly />
-                      </div>
-                    ) : MARKDOWN_TYPES.has(item.itemType.name) ? (
-                      <div className="mt-1.5">
-                        <MarkdownEditor value={item.content} readOnly />
-                      </div>
-                    ) : (
-                      <pre className="mt-1.5 min-w-0 overflow-x-auto rounded-lg bg-muted p-3 font-mono text-xs">
-                        <code>{item.content}</code>
-                      </pre>
-                    )}
-                  </div>
-                )}
-
-                {item.contentType === "URL" && item.url && (
-                  <div>
-                    <h3 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                      URL
-                    </h3>
-                    <a
-                      href={item.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-1.5 block break-all text-sm text-primary underline-offset-4 hover:underline"
-                    >
-                      {item.url}
-                    </a>
-                  </div>
-                )}
-
-                {item.contentType === "FILE" && item.fileName && (
-                  <div className="min-w-0">
-                    <h3 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                      {item.itemType.name === "image" ? "Image" : "File"}
-                    </h3>
-                    <div className="mt-1.5 flex items-center gap-3 rounded-md border border-border p-3">
-                      {item.itemType.name === "image" && item.fileUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={item.fileUrl}
-                          alt={item.fileName}
-                          className="size-12 shrink-0 rounded object-cover"
-                        />
-                      ) : (
-                        <FileIcon className="size-8 shrink-0 text-muted-foreground" />
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium">{item.fileName}</p>
-                        {item.fileSize !== null && (
-                          <p className="text-xs text-muted-foreground">
-                            {formatFileSize(item.fileSize)}
-                          </p>
-                        )}
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="shrink-0"
-                        nativeButton={false}
-                        render={<a href={`/api/download/${item.id}`} />}
-                      >
-                        <Download />
-                        Download
-                      </Button>
-                    </div>
-                  </div>
-                )}
-
-                {item.tags.length > 0 && (
-                  <div>
-                    <h3 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                      Tags
-                    </h3>
-                    <div className="mt-1.5 flex flex-wrap gap-1.5">
-                      {item.tags.map((tag) => (
-                        <Badge key={tag} variant="secondary" className="text-muted-foreground">
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {item.collections.length > 0 && (
-                  <div>
-                    <h3 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                      Collections
-                    </h3>
-                    <div className="mt-1.5 flex flex-wrap gap-1.5">
-                      {item.collections.map((collection) => (
-                        <Badge key={collection.id} variant="outline">
-                          {collection.name}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
+              <ItemDetailView item={item} />
             )}
 
             <div className="mt-auto border-t p-4 text-xs text-muted-foreground">

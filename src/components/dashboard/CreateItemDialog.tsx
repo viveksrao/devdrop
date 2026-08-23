@@ -14,12 +14,17 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { CodeEditor } from "@/components/dashboard/CodeEditor";
-import { MarkdownEditor } from "@/components/dashboard/MarkdownEditor";
+import { ItemContentField } from "@/components/dashboard/ItemContentField";
 import { FileUpload, type UploadedFile } from "@/components/dashboard/FileUpload";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { ITEM_TYPE_ICONS, ITEM_TYPE_LABELS } from "@/lib/constants/item-types";
+import {
+  ITEM_TYPE_ICONS,
+  ITEM_TYPE_LABELS,
+  TEXT_CONTENT_TYPES,
+  LANGUAGE_TYPES,
+  FILE_TYPES,
+} from "@/lib/constants/item-types";
 import { createItem } from "@/actions/items";
 
 const CREATABLE_TYPES = [
@@ -32,12 +37,6 @@ const CREATABLE_TYPES = [
   "image",
 ] as const;
 type CreatableType = (typeof CREATABLE_TYPES)[number];
-
-const TEXT_CONTENT_TYPES = new Set<CreatableType>(["snippet", "prompt", "command", "note"]);
-const LANGUAGE_TYPES = new Set<CreatableType>(["snippet", "command"]);
-const CODE_TYPES = new Set<CreatableType>(["snippet", "command"]);
-const MARKDOWN_TYPES = new Set<CreatableType>(["note", "prompt"]);
-const FILE_TYPES = new Set<CreatableType>(["file", "image"]);
 
 interface FormState {
   title: string;
@@ -173,25 +172,13 @@ export function CreateItemDialog({ open, onOpenChange }: CreateItemDialogProps) 
           {TEXT_CONTENT_TYPES.has(itemTypeName) && (
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="create-content">Content</Label>
-              {CODE_TYPES.has(itemTypeName) ? (
-                <CodeEditor
-                  value={form.content}
-                  onChange={(value) => setForm({ ...form, content: value })}
-                  language={form.language}
-                />
-              ) : MARKDOWN_TYPES.has(itemTypeName) ? (
-                <MarkdownEditor
-                  value={form.content}
-                  onChange={(value) => setForm({ ...form, content: value })}
-                />
-              ) : (
-                <Textarea
-                  id="create-content"
-                  className="min-h-32 font-mono text-xs"
-                  value={form.content}
-                  onChange={(e) => setForm({ ...form, content: e.target.value })}
-                />
-              )}
+              <ItemContentField
+                id="create-content"
+                itemTypeName={itemTypeName}
+                value={form.content}
+                onChange={(value) => setForm({ ...form, content: value })}
+                language={form.language}
+              />
             </div>
           )}
 
