@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { deleteFileFromR2, getR2KeyFromUrl } from "@/lib/r2";
 
 export async function DELETE() {
   try {
@@ -11,6 +12,19 @@ export async function DELETE() {
         { status: 401 }
       );
     }
+
+    const fileItems = await prisma.item.findMany({
+      where: { userId: session.user.id, contentType: "FILE", fileUrl: { not: null } },
+      select: { fileUrl: true },
+    });
+
+    await Promise.all(
+      fileItems.map(({ fileUrl }) =>
+        deleteFileFromR2(getR2KeyFromUrl(fileUrl!)).catch((error) =>
+          console.error("Failed to delete R2 object during account deletion:", error)
+        )
+      )
+    );
 
     await prisma.user.delete({ where: { id: session.user.id } });
 
