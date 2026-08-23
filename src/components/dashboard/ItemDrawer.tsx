@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Copy, Download, FileIcon, Pencil, Pin, Star, Trash2, X } from "lucide-react";
+import { Check, Copy, Download, FileIcon, Pencil, Pin, Star, Trash2, X } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -74,6 +74,7 @@ export function ItemDrawer({ itemId, open, onOpenChange }: ItemDrawerProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [editingForItemId, setEditingForItemId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   if (isEditing && editingForItemId !== itemId) {
     setIsEditing(false);
@@ -116,6 +117,22 @@ export function ItemDrawer({ itemId, open, onOpenChange }: ItemDrawerProps) {
 
   const Icon = item ? ITEM_TYPE_ICONS[item.itemType.name] : undefined;
   const label = item ? (ITEM_TYPE_LABELS[item.itemType.name] ?? item.itemType.name).replace(/s$/, "") : "";
+
+  async function handleCopy() {
+    if (!item) return;
+    const value = item.contentType === "URL" ? item.url : item.content;
+    if (!value) {
+      toast.error("Nothing to copy");
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      toast.error("Failed to copy");
+    }
+  }
 
   function handleStartEdit() {
     if (!item) return;
@@ -215,8 +232,8 @@ export function ItemDrawer({ itemId, open, onOpenChange }: ItemDrawerProps) {
               </div>
             ) : (
               <div className="flex flex-wrap items-center gap-1 overflow-x-auto border-b px-4 pb-4 sm:flex-nowrap">
-                <Button variant="ghost" size="sm">
-                  <Copy />
+                <Button variant="ghost" size="sm" onClick={handleCopy}>
+                  {copied ? <Check className="text-emerald-500" /> : <Copy />}
                   Copy
                 </Button>
                 <Button variant="ghost" size="sm" onClick={handleStartEdit}>
