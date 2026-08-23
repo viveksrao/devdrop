@@ -52,3 +52,27 @@ export function formatFileSize(bytes: number): string {
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
+
+export type FileIconName =
+  | "FileText"
+  | "FileJson"
+  | "FileCode"
+  | "FileSpreadsheet"
+  | "File";
+
+const EXTENSION_ICON_MAP: Record<string, FileIconName> = {
+  ".txt": "FileText",
+  ".md": "FileText",
+  ".json": "FileJson",
+  ".yaml": "FileCode",
+  ".yml": "FileCode",
+  ".xml": "FileCode",
+  ".toml": "FileCode",
+  ".ini": "FileCode",
+  ".csv": "FileSpreadsheet",
+};
+
+export function getFileIconName(fileName: string): FileIconName {
+  const extension = fileName.slice(fileName.lastIndexOf(".")).toLowerCase();
+  return EXTENSION_ICON_MAP[extension] ?? "File";
+}

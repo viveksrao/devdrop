@@ -7,6 +7,9 @@ export interface ItemWithType {
   description: string | null;
   contentType: "TEXT" | "FILE" | "URL";
   fileUrl: string | null;
+  fileName: string | null;
+  fileSize: number | null;
+  createdAt: Date;
   isFavorite: boolean;
   isPinned: boolean;
   tags: string[];
@@ -24,6 +27,9 @@ function toItemWithType(item: {
   description: string | null;
   contentType: string;
   fileUrl: string | null;
+  fileName: string | null;
+  fileSize: number | null;
+  createdAt: Date;
   isFavorite: boolean;
   isPinned: boolean;
   tags: { name: string }[];
@@ -35,6 +41,9 @@ function toItemWithType(item: {
     description: item.description,
     contentType: item.contentType as ItemWithType["contentType"],
     fileUrl: item.fileUrl,
+    fileName: item.fileName,
+    fileSize: item.fileSize,
+    createdAt: item.createdAt,
     isFavorite: item.isFavorite,
     isPinned: item.isPinned,
     tags: item.tags.map((tag) => tag.name),
