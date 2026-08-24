@@ -85,3 +85,31 @@ export async function getCollectionStats(userId: string): Promise<CollectionStat
 
   return { totalCollections, favoriteCollections };
 }
+
+export interface CreateCollectionInput {
+  name: string;
+  description: string | null;
+}
+
+export async function createCollection(
+  userId: string,
+  data: CreateCollectionInput
+): Promise<CollectionWithStats> {
+  const collection = await prisma.collection.create({
+    data: {
+      name: data.name,
+      description: data.description,
+      userId,
+    },
+  });
+
+  return {
+    id: collection.id,
+    name: collection.name,
+    description: collection.description,
+    isFavorite: collection.isFavorite,
+    itemCount: 0,
+    types: [],
+    dominantColor: null,
+  };
+}

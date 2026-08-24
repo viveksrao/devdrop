@@ -7,6 +7,7 @@ import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { DashboardSidebar } from "@/components/layout/DashboardSidebar";
 import { DashboardTopBar } from "@/components/layout/DashboardTopBar";
 import { CreateItemDialog } from "@/components/dashboard/CreateItemDialog";
+import { CreateCollectionDialog } from "@/components/dashboard/CreateCollectionDialog";
 import type { SystemItemType } from "@/lib/db/items";
 import type { CollectionWithStats } from "@/lib/db/collections";
 
@@ -33,6 +34,7 @@ export function DashboardShell({
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [createItemOpen, setCreateItemOpen] = useState(false);
+  const [createCollectionOpen, setCreateCollectionOpen] = useState(false);
 
   return (
     <div className="flex h-screen overflow-hidden bg-background text-foreground">
@@ -61,6 +63,7 @@ export function DashboardShell({
         <DashboardTopBar
         user={user}
         onNewItem={() => setCreateItemOpen(true)}
+        onNewCollection={() => setCreateCollectionOpen(true)}
         sidebarTrigger={
           <Button
             variant="ghost"
@@ -77,6 +80,7 @@ export function DashboardShell({
       </div>
 
       <CreateItemDialog open={createItemOpen} onOpenChange={setCreateItemOpen} />
+      <CreateCollectionDialog open={createCollectionOpen} onOpenChange={setCreateCollectionOpen} />
     </div>
   );
 }
