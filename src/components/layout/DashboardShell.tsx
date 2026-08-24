@@ -9,7 +9,7 @@ import { DashboardTopBar } from "@/components/layout/DashboardTopBar";
 import { CreateItemDialog } from "@/components/dashboard/CreateItemDialog";
 import { CreateCollectionDialog } from "@/components/dashboard/CreateCollectionDialog";
 import type { SystemItemType } from "@/lib/db/items";
-import type { CollectionWithStats } from "@/lib/db/collections";
+import type { CollectionWithStats, CollectionOption } from "@/lib/db/collections";
 
 interface ShellUser {
   name?: string | null;
@@ -22,6 +22,7 @@ interface DashboardShellProps {
   children: React.ReactNode;
   itemTypes: SystemItemType[];
   recentCollections: CollectionWithStats[];
+  allCollections: CollectionOption[];
   user: ShellUser;
 }
 
@@ -29,6 +30,7 @@ export function DashboardShell({
   children,
   itemTypes,
   recentCollections,
+  allCollections,
   user,
 }: DashboardShellProps) {
   const [collapsed, setCollapsed] = useState(false);
@@ -79,7 +81,11 @@ export function DashboardShell({
         <main className="flex-1 overflow-y-auto p-6">{children}</main>
       </div>
 
-      <CreateItemDialog open={createItemOpen} onOpenChange={setCreateItemOpen} />
+      <CreateItemDialog
+        open={createItemOpen}
+        onOpenChange={setCreateItemOpen}
+        collections={allCollections}
+      />
       <CreateCollectionDialog open={createCollectionOpen} onOpenChange={setCreateCollectionOpen} />
     </div>
   );

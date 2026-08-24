@@ -181,6 +181,7 @@ export interface UpdateItemInput {
   url: string | null;
   language: string | null;
   tags: string[];
+  collectionIds: string[];
 }
 
 export async function updateItem(
@@ -190,6 +191,11 @@ export async function updateItem(
 ): Promise<ItemDetail | null> {
   const existing = await prisma.item.findFirst({ where: { id: itemId, userId } });
   if (!existing) return null;
+
+  const ownedCollections = await prisma.collection.findMany({
+    where: { id: { in: data.collectionIds }, userId },
+    select: { id: true },
+  });
 
   const item = await prisma.item.update({
     where: { id: itemId },
@@ -205,6 +211,10 @@ export async function updateItem(
           where: { name },
           create: { name },
         })),
+      },
+      collections: {
+        deleteMany: {},
+        create: ownedCollections.map(({ id }) => ({ collectionId: id })),
       },
     },
     include: {
@@ -228,6 +238,7 @@ export interface CreateItemInput {
   fileUrl: string | null;
   fileName: string | null;
   fileSize: number | null;
+  collectionIds: string[];
 }
 
 const URL_CONTENT_TYPES = new Set(["link"]);
@@ -247,6 +258,11 @@ export async function createItem(
     where: { name: data.itemTypeName, isSystem: true },
   });
   if (!itemType) return null;
+
+  const ownedCollections = await prisma.collection.findMany({
+    where: { id: { in: data.collectionIds }, userId },
+    select: { id: true },
+  });
 
   const contentType = getContentType(data.itemTypeName);
 
@@ -268,6 +284,9 @@ export async function createItem(
           where: { name },
           create: { name },
         })),
+      },
+      collections: {
+        create: ownedCollections.map(({ id }) => ({ collectionId: id })),
       },
     },
     include: {

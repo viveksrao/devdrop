@@ -30,6 +30,7 @@ describe("updateItem action", () => {
       url: null,
       language: null,
       tags: [],
+      collectionIds: [],
     });
 
     expect(result).toEqual({ success: false, error: "Title is required" });
@@ -45,6 +46,7 @@ describe("updateItem action", () => {
       url: "not-a-url",
       language: null,
       tags: [],
+      collectionIds: [],
     });
 
     expect(result.success).toBe(false);
@@ -61,6 +63,7 @@ describe("updateItem action", () => {
       url: null,
       language: null,
       tags: [],
+      collectionIds: [],
     });
 
     expect(result).toEqual({ success: false, error: "Unauthorized" });
@@ -78,6 +81,7 @@ describe("updateItem action", () => {
       url: null,
       language: null,
       tags: [],
+      collectionIds: [],
     });
 
     expect(result).toEqual({ success: false, error: "Item not found" });
@@ -95,6 +99,7 @@ describe("updateItem action", () => {
       url: "https://example.com",
       language: "typescript",
       tags: ["a", "b"],
+      collectionIds: ["col-1"],
     });
 
     expect(mockUpdateItemInDb).toHaveBeenCalledWith("user-1", "item-1", {
@@ -104,6 +109,7 @@ describe("updateItem action", () => {
       url: "https://example.com",
       language: "typescript",
       tags: ["a", "b"],
+      collectionIds: ["col-1"],
     });
     expect(result).toEqual({ success: true, data: updated });
   });
@@ -159,6 +165,7 @@ describe("createItem action", () => {
       itemTypeName: "snippet",
       title: "  ",
       tags: [],
+      collectionIds: [],
     });
 
     expect(result).toEqual({ success: false, error: "Title is required" });
@@ -172,6 +179,7 @@ describe("createItem action", () => {
       itemTypeName: "bogus",
       title: "Valid title",
       tags: [],
+      collectionIds: [],
     });
 
     expect(result.success).toBe(false);
@@ -183,6 +191,7 @@ describe("createItem action", () => {
       itemTypeName: "link",
       title: "Valid title",
       tags: [],
+      collectionIds: [],
     });
 
     expect(result).toEqual({ success: false, error: "URL is required" });
@@ -195,6 +204,7 @@ describe("createItem action", () => {
       title: "Valid title",
       url: "not-a-url",
       tags: [],
+      collectionIds: [],
     });
 
     expect(result.success).toBe(false);
@@ -208,6 +218,7 @@ describe("createItem action", () => {
       itemTypeName: "snippet",
       title: "Valid title",
       tags: [],
+      collectionIds: [],
     });
 
     expect(result).toEqual({ success: false, error: "Unauthorized" });
@@ -222,6 +233,7 @@ describe("createItem action", () => {
       itemTypeName: "snippet",
       title: "Valid title",
       tags: [],
+      collectionIds: [],
     });
 
     expect(result).toEqual({ success: false, error: "Invalid item type" });
@@ -239,6 +251,7 @@ describe("createItem action", () => {
       content: "code",
       language: "typescript",
       tags: ["a", "b"],
+      collectionIds: ["col-1"],
     });
 
     expect(mockCreateItemInDb).toHaveBeenCalledWith("user-1", {
@@ -252,6 +265,7 @@ describe("createItem action", () => {
       fileUrl: null,
       fileName: null,
       fileSize: null,
+      collectionIds: ["col-1"],
     });
     expect(result).toEqual({ success: true, data: created });
   });
@@ -266,6 +280,7 @@ describe("createItem action", () => {
       title: "Example",
       url: "https://example.com",
       tags: [],
+      collectionIds: [],
     });
 
     expect(mockCreateItemInDb).toHaveBeenCalledWith("user-1", {
@@ -279,6 +294,7 @@ describe("createItem action", () => {
       fileUrl: null,
       fileName: null,
       fileSize: null,
+      collectionIds: [],
     });
     expect(result).toEqual({ success: true, data: created });
   });
@@ -288,6 +304,7 @@ describe("createItem action", () => {
       itemTypeName: "image",
       title: "Screenshot",
       tags: [],
+      collectionIds: [],
     });
 
     expect(result).toEqual({ success: false, error: "File is required" });
@@ -307,6 +324,7 @@ describe("createItem action", () => {
       fileUrl: "https://files.example.com/user-1/abc.png",
       fileName: "screenshot.png",
       fileSize: 1024,
+      collectionIds: [],
     });
 
     expect(mockCreateItemInDb).toHaveBeenCalledWith("user-1", {
@@ -320,6 +338,7 @@ describe("createItem action", () => {
       fileUrl: "https://files.example.com/user-1/abc.png",
       fileName: "screenshot.png",
       fileSize: 1024,
+      collectionIds: [],
     });
     expect(result).toEqual({ success: true, data: created });
     vi.unstubAllEnvs();
@@ -336,6 +355,7 @@ describe("createItem action", () => {
       fileUrl: "https://files.example.com/user-2/abc.png",
       fileName: "screenshot.png",
       fileSize: 1024,
+      collectionIds: [],
     });
 
     expect(result).toEqual({ success: false, error: "Invalid file" });
@@ -354,6 +374,7 @@ describe("createItem action", () => {
       fileUrl: "https://internal.attacker.example/secrets",
       fileName: "screenshot.png",
       fileSize: 1024,
+      collectionIds: [],
     });
 
     expect(result).toEqual({ success: false, error: "Invalid file" });

@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { DashboardShell } from "@/components/layout/DashboardShell";
 import { DashboardMain } from "@/components/dashboard/DashboardMain";
 import { getSystemItemTypes, getPinnedItems, getRecentItems, getItemStats } from "@/lib/db/items";
-import { getRecentCollections, getCollectionStats } from "@/lib/db/collections";
+import { getRecentCollections, getCollectionStats, getAllCollections } from "@/lib/db/collections";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 
@@ -23,6 +23,7 @@ export default async function DashboardPage() {
     itemTypes,
     sidebarRecentCollections,
     mainRecentCollections,
+    allCollections,
     pinnedItems,
     recentItems,
     itemStats,
@@ -31,6 +32,7 @@ export default async function DashboardPage() {
     getSystemItemTypes(user.id),
     getRecentCollections(user.id, SIDEBAR_RECENT_COLLECTIONS_COUNT),
     getRecentCollections(user.id, MAIN_RECENT_COLLECTIONS_COUNT),
+    getAllCollections(user.id),
     getPinnedItems(user.id),
     getRecentItems(user.id, RECENT_ITEMS_COUNT),
     getItemStats(user.id),
@@ -41,6 +43,7 @@ export default async function DashboardPage() {
     <DashboardShell
       itemTypes={itemTypes}
       recentCollections={sidebarRecentCollections}
+      allCollections={allCollections}
       user={{
         name: user.name,
         email: user.email,

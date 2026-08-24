@@ -6,7 +6,7 @@ import { ImageCard } from "@/components/dashboard/ImageCard";
 import { FileListItem } from "@/components/dashboard/FileListItem";
 import { getItemTypeNameFromSlug, ITEM_TYPE_LABELS } from "@/lib/constants/item-types";
 import { getItemsByType, getSystemItemTypes } from "@/lib/db/items";
-import { getRecentCollections } from "@/lib/db/collections";
+import { getRecentCollections, getAllCollections } from "@/lib/db/collections";
 import { prisma } from "@/lib/prisma";
 
 const SIDEBAR_RECENT_COLLECTIONS_COUNT = 5;
@@ -26,10 +26,11 @@ export default async function ItemsByTypePage({ params }: ItemsByTypePageProps) 
   const user = await prisma.user.findUnique({ where: { id: session.user.id } });
   if (!user) redirect("/sign-in");
 
-  const [items, itemTypes, recentCollections] = await Promise.all([
+  const [items, itemTypes, recentCollections, allCollections] = await Promise.all([
     getItemsByType(user.id, typeName),
     getSystemItemTypes(user.id),
     getRecentCollections(user.id, SIDEBAR_RECENT_COLLECTIONS_COUNT),
+    getAllCollections(user.id),
   ]);
 
   const label = ITEM_TYPE_LABELS[typeName] ?? typeName;
@@ -38,6 +39,7 @@ export default async function ItemsByTypePage({ params }: ItemsByTypePageProps) 
     <DashboardShell
       itemTypes={itemTypes}
       recentCollections={recentCollections}
+      allCollections={allCollections}
       user={{
         name: user.name,
         email: user.email,

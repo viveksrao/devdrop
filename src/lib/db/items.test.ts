@@ -124,14 +124,16 @@ describe("updateItem", () => {
       url: null,
       language: null,
       tags: [],
+      collectionIds: [],
     });
 
     expect(result).toBeNull();
     expect(prismaMock.item.update).not.toHaveBeenCalled();
   });
 
-  it("updates the item's fields and replaces its tags", async () => {
+  it("updates the item's fields, replaces its tags, and scopes collections to the owner", async () => {
     prismaMock.item.findFirst.mockResolvedValueOnce({ id: "item-1" } as never);
+    prismaMock.collection.findMany.mockResolvedValueOnce([{ id: "col-1" }] as never);
     prismaMock.item.update.mockResolvedValueOnce(updatedItem);
 
     const result = await updateItem("user-1", "item-1", {
@@ -141,8 +143,13 @@ describe("updateItem", () => {
       url: null,
       language: "javascript",
       tags: ["react"],
+      collectionIds: ["col-1", "col-not-owned"],
     });
 
+    expect(prismaMock.collection.findMany).toHaveBeenCalledWith({
+      where: { id: { in: ["col-1", "col-not-owned"] }, userId: "user-1" },
+      select: { id: true },
+    });
     expect(prismaMock.item.update).toHaveBeenCalledWith({
       where: { id: "item-1" },
       data: {
@@ -154,6 +161,10 @@ describe("updateItem", () => {
         tags: {
           set: [],
           connectOrCreate: [{ where: { name: "react" }, create: { name: "react" } }],
+        },
+        collections: {
+          deleteMany: {},
+          create: [{ collectionId: "col-1" }],
         },
       },
       include: {
@@ -219,13 +230,14 @@ describe("createItem", () => {
       fileUrl: null,
       fileName: null,
       fileSize: null,
+      collectionIds: [],
     });
 
     expect(result).toBeNull();
     expect(prismaMock.item.create).not.toHaveBeenCalled();
   });
 
-  it("creates a TEXT item scoped to the user, resolving the type by name", async () => {
+  it("creates a TEXT item scoped to the user, resolving the type by name and owned collections", async () => {
     prismaMock.itemType.findFirst.mockResolvedValueOnce({
       id: "type-1",
       name: "snippet",
@@ -234,6 +246,7 @@ describe("createItem", () => {
       isSystem: true,
       userId: null,
     });
+    prismaMock.collection.findMany.mockResolvedValueOnce([{ id: "col-1" }] as never);
     prismaMock.item.create.mockResolvedValueOnce(createdItem);
 
     const result = await createItem("user-1", {
@@ -247,10 +260,15 @@ describe("createItem", () => {
       fileUrl: null,
       fileName: null,
       fileSize: null,
+      collectionIds: ["col-1", "col-not-owned"],
     });
 
     expect(prismaMock.itemType.findFirst).toHaveBeenCalledWith({
       where: { name: "snippet", isSystem: true },
+    });
+    expect(prismaMock.collection.findMany).toHaveBeenCalledWith({
+      where: { id: { in: ["col-1", "col-not-owned"] }, userId: "user-1" },
+      select: { id: true },
     });
     expect(prismaMock.item.create).toHaveBeenCalledWith({
       data: {
@@ -267,6 +285,9 @@ describe("createItem", () => {
         itemTypeId: "type-1",
         tags: {
           connectOrCreate: [{ where: { name: "react" }, create: { name: "react" } }],
+        },
+        collections: {
+          create: [{ collectionId: "col-1" }],
         },
       },
       include: {
@@ -305,6 +326,7 @@ describe("createItem", () => {
       isSystem: true,
       userId: null,
     });
+    prismaMock.collection.findMany.mockResolvedValueOnce([]);
     prismaMock.item.create.mockResolvedValueOnce({
       ...createdItem,
       contentType: "URL",
@@ -324,6 +346,7 @@ describe("createItem", () => {
       fileUrl: null,
       fileName: null,
       fileSize: null,
+      collectionIds: [],
     });
 
     expect(prismaMock.item.create).toHaveBeenCalledWith(
@@ -342,6 +365,7 @@ describe("createItem", () => {
       isSystem: true,
       userId: null,
     });
+    prismaMock.collection.findMany.mockResolvedValueOnce([]);
     prismaMock.item.create.mockResolvedValueOnce({
       ...createdItem,
       contentType: "FILE",
@@ -363,6 +387,7 @@ describe("createItem", () => {
       fileUrl: "https://files.example.com/user-1/abc.png",
       fileName: "screenshot.png",
       fileSize: 1024,
+      collectionIds: [],
     });
 
     expect(prismaMock.item.create).toHaveBeenCalledWith(

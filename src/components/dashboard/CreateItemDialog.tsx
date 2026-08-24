@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ItemContentField } from "@/components/dashboard/ItemContentField";
 import { FileUpload, type UploadedFile } from "@/components/dashboard/FileUpload";
+import { CollectionPicker } from "@/components/dashboard/CollectionPicker";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import {
@@ -26,6 +27,7 @@ import {
   FILE_TYPES,
 } from "@/lib/constants/item-types";
 import { createItem } from "@/actions/items";
+import type { CollectionOption } from "@/lib/db/collections";
 
 const CREATABLE_TYPES = [
   "snippet",
@@ -59,13 +61,15 @@ const EMPTY_FORM: FormState = {
 interface CreateItemDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  collections: CollectionOption[];
 }
 
-export function CreateItemDialog({ open, onOpenChange }: CreateItemDialogProps) {
+export function CreateItemDialog({ open, onOpenChange, collections }: CreateItemDialogProps) {
   const router = useRouter();
   const [itemTypeName, setItemTypeName] = useState<CreatableType>("snippet");
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [file, setFile] = useState<UploadedFile | null>(null);
+  const [collectionIds, setCollectionIds] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
 
   function handleOpenChange(nextOpen: boolean) {
@@ -73,6 +77,7 @@ export function CreateItemDialog({ open, onOpenChange }: CreateItemDialogProps) 
       setItemTypeName("snippet");
       setForm(EMPTY_FORM);
       setFile(null);
+      setCollectionIds([]);
     }
     onOpenChange(nextOpen);
   }
@@ -98,6 +103,7 @@ export function CreateItemDialog({ open, onOpenChange }: CreateItemDialogProps) 
       fileUrl: file?.fileUrl,
       fileName: file?.fileName,
       fileSize: file?.fileSize,
+      collectionIds,
     });
 
     setIsSaving(false);
@@ -225,6 +231,12 @@ export function CreateItemDialog({ open, onOpenChange }: CreateItemDialogProps) 
               onChange={(e) => setForm({ ...form, tags: e.target.value })}
             />
           </div>
+
+          <CollectionPicker
+            collections={collections}
+            selectedIds={collectionIds}
+            onChange={setCollectionIds}
+          />
         </div>
 
         <DialogFooter>

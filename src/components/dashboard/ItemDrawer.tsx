@@ -27,6 +27,7 @@ import { ItemEditForm, type ItemEditFormState } from "@/components/dashboard/Ite
 import { ItemDetailView } from "@/components/dashboard/ItemDetailView";
 import { ITEM_TYPE_ICONS, ITEM_TYPE_LABELS } from "@/lib/constants/item-types";
 import type { ItemDetail } from "@/lib/db/items";
+import type { CollectionOption } from "@/lib/db/collections";
 import { updateItem, deleteItem } from "@/actions/items";
 
 function toEditFormState(item: ItemDetail): ItemEditFormState {
@@ -37,6 +38,7 @@ function toEditFormState(item: ItemDetail): ItemEditFormState {
     url: item.url ?? "",
     language: item.language ?? "",
     tags: item.tags.join(", "),
+    collectionIds: item.collections.map((collection) => collection.id),
   };
 }
 
@@ -56,6 +58,7 @@ export function ItemDrawer({ itemId, open, onOpenChange }: ItemDrawerProps) {
   const [editingForItemId, setEditingForItemId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [allCollections, setAllCollections] = useState<CollectionOption[]>([]);
 
   if (isEditing && editingForItemId !== itemId) {
     setIsEditing(false);
@@ -120,6 +123,11 @@ export function ItemDrawer({ itemId, open, onOpenChange }: ItemDrawerProps) {
     setEditForm(toEditFormState(item));
     setEditingForItemId(itemId);
     setIsEditing(true);
+
+    fetch("/api/collections")
+      .then((res) => (res.ok ? res.json() : Promise.reject(res)))
+      .then((json) => setAllCollections(json.data))
+      .catch(() => setAllCollections([]));
   }
 
   function handleCancelEdit() {
@@ -145,6 +153,7 @@ export function ItemDrawer({ itemId, open, onOpenChange }: ItemDrawerProps) {
         .split(",")
         .map((tag) => tag.trim())
         .filter(Boolean),
+      collectionIds: editForm.collectionIds,
     });
 
     setIsSaving(false);
@@ -266,7 +275,7 @@ export function ItemDrawer({ itemId, open, onOpenChange }: ItemDrawerProps) {
             {isEditing && editForm ? (
               <ItemEditForm
                 itemType={item.itemType}
-                collections={item.collections}
+                allCollections={allCollections}
                 form={editForm}
                 onChange={setEditForm}
               />
