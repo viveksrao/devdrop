@@ -72,6 +72,19 @@ export async function getRecentCollections(
   });
 }
 
+export interface CollectionOption {
+  id: string;
+  name: string;
+}
+
+export async function getAllCollections(userId: string): Promise<CollectionOption[]> {
+  return prisma.collection.findMany({
+    where: { userId },
+    orderBy: { name: "asc" },
+    select: { id: true, name: true },
+  });
+}
+
 export interface CollectionStats {
   totalCollections: number;
   favoriteCollections: number;

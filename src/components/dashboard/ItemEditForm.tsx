@@ -2,9 +2,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { ItemContentField } from "@/components/dashboard/ItemContentField";
-import { TagBadgeList } from "@/components/dashboard/TagBadgeList";
+import { CollectionPicker } from "@/components/dashboard/CollectionPicker";
 import { TEXT_CONTENT_TYPES, LANGUAGE_TYPES } from "@/lib/constants/item-types";
 import type { ItemDetail } from "@/lib/db/items";
+import type { CollectionOption } from "@/lib/db/collections";
 
 export interface ItemEditFormState {
   title: string;
@@ -13,16 +14,17 @@ export interface ItemEditFormState {
   url: string;
   language: string;
   tags: string;
+  collectionIds: string[];
 }
 
 interface ItemEditFormProps {
   itemType: ItemDetail["itemType"];
-  collections: ItemDetail["collections"];
+  allCollections: CollectionOption[];
   form: ItemEditFormState;
   onChange: (form: ItemEditFormState) => void;
 }
 
-export function ItemEditForm({ itemType, collections, form, onChange }: ItemEditFormProps) {
+export function ItemEditForm({ itemType, allCollections, form, onChange }: ItemEditFormProps) {
   return (
     <div className="flex min-w-0 flex-col gap-4 overflow-y-auto px-4 pb-4">
       <div className="flex flex-col gap-1.5">
@@ -88,10 +90,10 @@ export function ItemEditForm({ itemType, collections, form, onChange }: ItemEdit
         />
       </div>
 
-      <TagBadgeList
-        label="Collections"
-        items={collections.map((collection) => collection.name)}
-        variant="outline"
+      <CollectionPicker
+        collections={allCollections}
+        selectedIds={form.collectionIds}
+        onChange={(collectionIds) => onChange({ ...form, collectionIds })}
       />
     </div>
   );

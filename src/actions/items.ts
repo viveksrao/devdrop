@@ -33,6 +33,7 @@ const createItemSchema = z
     fileUrl: z.string().trim().optional(),
     fileName: z.string().trim().optional(),
     fileSize: z.number().int().positive().optional(),
+    collectionIds: z.array(z.string()),
   })
   .refine((data) => data.itemTypeName !== "link" || data.url, {
     message: "URL is required",
@@ -59,6 +60,7 @@ const updateItemSchema = z.object({
     .optional(),
   language: z.string().nullable().optional(),
   tags: z.array(z.string().trim().min(1)),
+  collectionIds: z.array(z.string()),
 });
 
 export type UpdateItemPayload = z.infer<typeof updateItemSchema>;
@@ -84,7 +86,7 @@ export async function updateItem(
   }
 
   try {
-    const { title, description, content, url, language, tags } = parsed.data;
+    const { title, description, content, url, language, tags, collectionIds } = parsed.data;
 
     const updated = await updateItemInDb(session.user.id, itemId, {
       title,
@@ -93,6 +95,7 @@ export async function updateItem(
       url: url ? url : null,
       language: language ?? null,
       tags,
+      collectionIds,
     });
 
     if (!updated) {
@@ -131,6 +134,7 @@ export async function createItem(
       fileUrl,
       fileName,
       fileSize,
+      collectionIds,
     } = parsed.data;
 
     if (FILE_ITEM_TYPES.has(itemTypeName) && fileUrl) {
@@ -151,6 +155,7 @@ export async function createItem(
       fileUrl: fileUrl || null,
       fileName: fileName || null,
       fileSize: fileSize ?? null,
+      collectionIds,
     });
 
     if (!created) {
