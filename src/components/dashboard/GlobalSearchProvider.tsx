@@ -22,6 +22,10 @@ interface GlobalSearchContextValue {
 
 const GlobalSearchContext = createContext<GlobalSearchContextValue | null>(null);
 
+function filterCommandItem(value: string, search: string): number {
+  return value.toLowerCase().includes(search.toLowerCase()) ? 1 : 0;
+}
+
 export function useGlobalSearch(): GlobalSearchContextValue {
   const context = useContext(GlobalSearchContext);
   if (!context) {
@@ -88,7 +92,7 @@ export function GlobalSearchProvider({ children }: { children: React.ReactNode }
         title="Search"
         description="Search items and collections"
       >
-        <Command>
+        <Command filter={filterCommandItem}>
           <CommandInput placeholder="Search snippets, prompts, tags..." />
           <CommandList>
             <CommandEmpty>No results found.</CommandEmpty>
