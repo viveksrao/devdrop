@@ -1,14 +1,27 @@
 # Current Feature
 
+Collection Card Actions — Edit, Delete, Favorite (icon only)
+
 ## Status
+
+Not Started
 
 ## Goals
 
-<!-- Bullet points of what success looks like -->
+- `/collections/[id]` page has Edit, Delete, and Favorite buttons/icons in its header area.
+- Favorite is icon/button only — no actual favorite toggle behavior implemented yet.
+- Edit opens a modal to edit the collection's metadata (name, description).
+- Delete requires a confirmation (e.g. AlertDialog) before proceeding.
+- Deleting a collection does NOT delete its items — items just lose their membership in that collection (remove `ItemCollection` join rows only, items and other collection memberships stay intact).
+- On `CollectionCard` (used on both `/collections` list and the dashboard's recent collections grid), the existing 3-dots icon opens a dropdown menu with Edit, Delete, and Favorite entries.
+- Clicking anywhere else on the card still navigates to `/collections/[id]` (dropdown trigger and menu clicks must not trigger navigation).
 
 ## Notes
 
-<!-- Additional context, constraints, or details from spec -->
+- Favorite is UI-only this pass (icon/menu entry present, wired to nothing) — matches how `isFavorite` already exists on the `Collection` model but no toggle action exists yet.
+- Reuse existing patterns: `deleteItem`'s `AlertDialog` confirmation pattern, `CreateCollectionDialog`'s form/dialog pattern for the edit modal, `updateItem`/`createItem` server-action `{ success, data, error }` conventions.
+- Need a `deleteCollection` and `updateCollection` server action + db query, ownership-scoped like the existing item equivalents.
+- Check how `CollectionCard`'s 3-dots icon currently renders (likely inert) before wiring the dropdown.
 
 ## History
 
