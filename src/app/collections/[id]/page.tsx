@@ -4,6 +4,7 @@ import { DashboardShell } from "@/components/layout/DashboardShell";
 import { ItemCard } from "@/components/dashboard/ItemCard";
 import { ImageCard } from "@/components/dashboard/ImageCard";
 import { FileListItem } from "@/components/dashboard/FileListItem";
+import { CollectionDetailHeader } from "@/components/dashboard/CollectionDetailHeader";
 import { getSystemItemTypes } from "@/lib/db/items";
 import {
   getCollectionDetail,
@@ -52,15 +53,7 @@ export default async function CollectionDetailPage({ params }: CollectionDetailP
       }}
     >
       <div className="flex flex-col gap-6">
-        <div>
-          <h1 className="text-2xl font-semibold">{collection.name}</h1>
-          {collection.description && (
-            <p className="mt-1 text-muted-foreground">{collection.description}</p>
-          )}
-          <p className="mt-1 text-sm text-muted-foreground">
-            {collection.items.length} {collection.items.length === 1 ? "item" : "items"}
-          </p>
-        </div>
+        <CollectionDetailHeader collection={collection} itemCount={collection.items.length} />
 
         {collection.items.length === 0 ? (
           <p className="text-sm text-muted-foreground">No items in this collection yet.</p>

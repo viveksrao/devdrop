@@ -190,3 +190,41 @@ export async function createCollection(
     dominantColor: null,
   };
 }
+
+export interface UpdateCollectionInput {
+  name: string;
+  description: string | null;
+}
+
+export async function updateCollection(
+  userId: string,
+  collectionId: string,
+  data: UpdateCollectionInput
+): Promise<CollectionWithStats | null> {
+  const existing = await prisma.collection.findFirst({
+    where: { id: collectionId, userId },
+  });
+  if (!existing) return null;
+
+  const collection = await prisma.collection.update({
+    where: { id: collectionId },
+    data: {
+      name: data.name,
+      description: data.description,
+    },
+    select: COLLECTION_STATS_SELECT,
+  });
+
+  return toCollectionWithStats(collection);
+}
+
+export async function deleteCollection(userId: string, collectionId: string): Promise<boolean> {
+  const existing = await prisma.collection.findFirst({
+    where: { id: collectionId, userId },
+  });
+  if (!existing) return false;
+
+  await prisma.collection.delete({ where: { id: collectionId } });
+
+  return true;
+}

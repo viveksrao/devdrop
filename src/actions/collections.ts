@@ -2,7 +2,11 @@
 
 import { z } from "zod";
 import { auth } from "@/auth";
-import { createCollection as createCollectionInDb } from "@/lib/db/collections";
+import {
+  createCollection as createCollectionInDb,
+  updateCollection as updateCollectionInDb,
+  deleteCollection as deleteCollectionInDb,
+} from "@/lib/db/collections";
 import type { CollectionWithStats } from "@/lib/db/collections";
 
 const createCollectionSchema = z.object({
@@ -11,6 +15,13 @@ const createCollectionSchema = z.object({
 });
 
 export type CreateCollectionPayload = z.infer<typeof createCollectionSchema>;
+
+const updateCollectionSchema = z.object({
+  name: z.string().trim().min(1, "Name is required"),
+  description: z.string().trim().optional(),
+});
+
+export type UpdateCollectionPayload = z.infer<typeof updateCollectionSchema>;
 
 interface ActionResult<T> {
   success: boolean;
@@ -42,6 +53,59 @@ export async function createCollection(
     return { success: true, data: created };
   } catch (error) {
     console.error("Failed to create collection:", error);
+    return { success: false, error: "Something went wrong" };
+  }
+}
+
+export async function updateCollection(
+  collectionId: string,
+  data: UpdateCollectionPayload
+): Promise<ActionResult<CollectionWithStats>> {
+  const parsed = updateCollectionSchema.safeParse(data);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message };
+  }
+
+  const session = await auth();
+  if (!session?.user) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  try {
+    const { name, description } = parsed.data;
+
+    const updated = await updateCollectionInDb(session.user.id, collectionId, {
+      name,
+      description: description || null,
+    });
+
+    if (!updated) {
+      return { success: false, error: "Collection not found" };
+    }
+
+    return { success: true, data: updated };
+  } catch (error) {
+    console.error("Failed to update collection:", error);
+    return { success: false, error: "Something went wrong" };
+  }
+}
+
+export async function deleteCollection(collectionId: string): Promise<ActionResult<null>> {
+  const session = await auth();
+  if (!session?.user) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  try {
+    const deleted = await deleteCollectionInDb(session.user.id, collectionId);
+
+    if (!deleted) {
+      return { success: false, error: "Collection not found" };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to delete collection:", error);
     return { success: false, error: "Something went wrong" };
   }
 }
