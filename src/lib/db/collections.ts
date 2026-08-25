@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { toItemWithType, type ItemWithType } from "@/lib/db/items";
 
 export interface CollectionTypeSummary {
   name: string;
@@ -18,6 +19,58 @@ export interface CollectionWithStats {
   dominantColor: string | null;
 }
 
+type CollectionForStats = {
+  id: string;
+  name: string;
+  description: string | null;
+  isFavorite: boolean;
+  items: { item: { itemType: { name: string; icon: string; color: string } } }[];
+};
+
+function toCollectionWithStats(collection: CollectionForStats): CollectionWithStats {
+  const typeCounts = new Map<string, { count: number; icon: string; color: string }>();
+
+  for (const { item } of collection.items) {
+    const { name, icon, color } = item.itemType;
+    const existing = typeCounts.get(name);
+    if (existing) {
+      existing.count += 1;
+    } else {
+      typeCounts.set(name, { count: 1, icon, color });
+    }
+  }
+
+  const sortedTypes = [...typeCounts.entries()].sort((a, b) => b[1].count - a[1].count);
+
+  return {
+    id: collection.id,
+    name: collection.name,
+    description: collection.description,
+    isFavorite: collection.isFavorite,
+    itemCount: collection.items.length,
+    types: sortedTypes.map(([name, { icon, color }]) => ({ name, icon, color })),
+    dominantColor: sortedTypes[0]?.[1].color ?? null,
+  };
+}
+
+const COLLECTION_STATS_SELECT = {
+  id: true,
+  name: true,
+  description: true,
+  isFavorite: true,
+  items: {
+    select: {
+      item: {
+        select: {
+          itemType: {
+            select: { name: true, icon: true, color: true },
+          },
+        },
+      },
+    },
+  },
+} as const;
+
 export async function getRecentCollections(
   userId: string,
   limit: number
@@ -26,50 +79,20 @@ export async function getRecentCollections(
     where: { userId },
     orderBy: { updatedAt: "desc" },
     take: limit,
-    select: {
-      id: true,
-      name: true,
-      description: true,
-      isFavorite: true,
-      items: {
-        select: {
-          item: {
-            select: {
-              itemType: {
-                select: { name: true, icon: true, color: true },
-              },
-            },
-          },
-        },
-      },
-    },
+    select: COLLECTION_STATS_SELECT,
   });
 
-  return collections.map((collection) => {
-    const typeCounts = new Map<string, { count: number; icon: string; color: string }>();
+  return collections.map(toCollectionWithStats);
+}
 
-    for (const { item } of collection.items) {
-      const { name, icon, color } = item.itemType;
-      const existing = typeCounts.get(name);
-      if (existing) {
-        existing.count += 1;
-      } else {
-        typeCounts.set(name, { count: 1, icon, color });
-      }
-    }
-
-    const sortedTypes = [...typeCounts.entries()].sort((a, b) => b[1].count - a[1].count);
-
-    return {
-      id: collection.id,
-      name: collection.name,
-      description: collection.description,
-      isFavorite: collection.isFavorite,
-      itemCount: collection.items.length,
-      types: sortedTypes.map(([name, { icon, color }]) => ({ name, icon, color })),
-      dominantColor: sortedTypes[0]?.[1].color ?? null,
-    };
+export async function getCollections(userId: string): Promise<CollectionWithStats[]> {
+  const collections = await prisma.collection.findMany({
+    where: { userId },
+    orderBy: { name: "asc" },
+    select: COLLECTION_STATS_SELECT,
   });
+
+  return collections.map(toCollectionWithStats);
 }
 
 export interface CollectionOption {
@@ -97,6 +120,47 @@ export async function getCollectionStats(userId: string): Promise<CollectionStat
   ]);
 
   return { totalCollections, favoriteCollections };
+}
+
+export interface CollectionDetail {
+  id: string;
+  name: string;
+  description: string | null;
+  isFavorite: boolean;
+  items: ItemWithType[];
+}
+
+export async function getCollectionDetail(
+  userId: string,
+  collectionId: string
+): Promise<CollectionDetail | null> {
+  const collection = await prisma.collection.findFirst({
+    where: { id: collectionId, userId },
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      isFavorite: true,
+      items: {
+        orderBy: { item: { createdAt: "desc" } },
+        select: {
+          item: {
+            include: { itemType: true, tags: true },
+          },
+        },
+      },
+    },
+  });
+
+  if (!collection) return null;
+
+  return {
+    id: collection.id,
+    name: collection.name,
+    description: collection.description,
+    isFavorite: collection.isFavorite,
+    items: collection.items.map(({ item }) => toItemWithType(item)),
+  };
 }
 
 export interface CreateCollectionInput {
