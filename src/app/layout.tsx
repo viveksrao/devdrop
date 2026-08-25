@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 import { ItemDrawerProvider } from "@/components/dashboard/ItemDrawerProvider";
+import { GlobalSearchProvider } from "@/components/dashboard/GlobalSearchProvider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -32,7 +33,9 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <TooltipProvider>
-          <ItemDrawerProvider>{children}</ItemDrawerProvider>
+          <ItemDrawerProvider>
+            <GlobalSearchProvider>{children}</GlobalSearchProvider>
+          </ItemDrawerProvider>
         </TooltipProvider>
         <Toaster />
       </body>
