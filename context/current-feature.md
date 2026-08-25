@@ -1,14 +1,27 @@
-# Current Feature
+# Current Feature: Global Search / Command Palette
 
 ## Status
 
+Not Started
+
 ## Goals
 
-<!-- Bullet points of what success looks like -->
+- Open a global command palette with Cmd+K (Mac) / Ctrl+K (Windows)
+- Fuzzy search across all items and collections, client-side (no server round-trips)
+- Grouped results: Items section, Collections section
+- Keyboard navigation (arrow keys, Enter to select)
+- Show item type icon and collection item count in results
+- Selecting an item opens the item drawer; selecting a collection navigates to its page
+- TopBar search input opens the palette on click
+- Search input placeholder shows a ⌘K hint
 
 ## Notes
 
-<!-- Additional context, constraints, or details from spec -->
+- Use the shadcn `cmdk` component (Command)
+- Pre-fetch searchable data on app load
+- Search data shape: items (id, title, type, content preview), collections (id, name, itemCount)
+- Reuse existing data fetching functions (e.g. `src/lib/db/items.ts`, `src/lib/db/collections.ts`) rather than writing new queries
+- Spec: @context/features/global-search-spec.md
 
 ## History
 
