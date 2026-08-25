@@ -21,7 +21,7 @@ export interface ItemWithType {
   };
 }
 
-function toItemWithType(item: {
+export function toItemWithType(item: {
   id: string;
   title: string;
   description: string | null;
