@@ -5,9 +5,6 @@ import { auth } from "@/auth";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { StatsCards } from "@/components/dashboard/StatsCards";
 import { TypeBreakdown } from "@/components/profile/TypeBreakdown";
-import { ChangePasswordForm } from "@/components/profile/ChangePasswordForm";
-import { DeleteAccountDialog } from "@/components/profile/DeleteAccountDialog";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getUserProfile } from "@/lib/db/user";
 import { getItemStats, getSystemItemTypes } from "@/lib/db/items";
 import { getCollectionStats } from "@/lib/db/collections";
@@ -63,34 +60,6 @@ export default async function ProfilePage() {
         <h2 className="text-sm font-medium text-muted-foreground">Usage</h2>
         <StatsCards itemStats={itemStats} collectionStats={collectionStats} />
         <TypeBreakdown types={itemTypes} />
-      </section>
-
-      {profile.hasPassword && (
-        <section>
-          <Card>
-            <CardHeader>
-              <CardTitle>Change password</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ChangePasswordForm />
-            </CardContent>
-          </Card>
-        </section>
-      )}
-
-      <section>
-        <Card>
-          <CardHeader>
-            <CardTitle>Danger zone</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-3">
-            <p className="text-sm text-muted-foreground">
-              Permanently delete your account and all associated items and
-              collections. This action cannot be undone.
-            </p>
-            <DeleteAccountDialog />
-          </CardContent>
-        </Card>
       </section>
     </div>
   );
