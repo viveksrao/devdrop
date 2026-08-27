@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { LogOut } from "lucide-react";
+import { LogOut, Settings } from "lucide-react";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import {
   DropdownMenu,
@@ -51,6 +51,10 @@ export function SidebarUserFooter({ name, email, image, collapsed }: SidebarUser
           <span className="min-w-0 flex-1">
             <span className="block truncate text-sm">{name ?? "Account"}</span>
           </span>
+        </DropdownMenuItem>
+        <DropdownMenuItem render={<Link href="/settings" />}>
+          <Settings />
+          Settings
         </DropdownMenuItem>
         <DropdownMenuItem
           variant="destructive"
