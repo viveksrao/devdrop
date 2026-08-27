@@ -12,6 +12,7 @@ export interface CollectionWithStats {
   name: string;
   description: string | null;
   isFavorite: boolean;
+  updatedAt: Date;
   itemCount: number;
   /** Content types present in the collection, ordered most-used first. */
   types: CollectionTypeSummary[];
@@ -24,6 +25,7 @@ type CollectionForStats = {
   name: string;
   description: string | null;
   isFavorite: boolean;
+  updatedAt: Date;
   items: { item: { itemType: { name: string; icon: string; color: string } } }[];
 };
 
@@ -47,6 +49,7 @@ function toCollectionWithStats(collection: CollectionForStats): CollectionWithSt
     name: collection.name,
     description: collection.description,
     isFavorite: collection.isFavorite,
+    updatedAt: collection.updatedAt,
     itemCount: collection.items.length,
     types: sortedTypes.map(([name, { icon, color }]) => ({ name, icon, color })),
     dominantColor: sortedTypes[0]?.[1].color ?? null,
@@ -58,6 +61,7 @@ const COLLECTION_STATS_SELECT = {
   name: true,
   description: true,
   isFavorite: true,
+  updatedAt: true,
   items: {
     select: {
       item: {
@@ -89,6 +93,16 @@ export async function getCollections(userId: string): Promise<CollectionWithStat
   const collections = await prisma.collection.findMany({
     where: { userId },
     orderBy: { name: "asc" },
+    select: COLLECTION_STATS_SELECT,
+  });
+
+  return collections.map(toCollectionWithStats);
+}
+
+export async function getFavoriteCollections(userId: string): Promise<CollectionWithStats[]> {
+  const collections = await prisma.collection.findMany({
+    where: { userId, isFavorite: true },
+    orderBy: { updatedAt: "desc" },
     select: COLLECTION_STATS_SELECT,
   });
 
@@ -192,6 +206,7 @@ export async function createCollection(
     name: collection.name,
     description: collection.description,
     isFavorite: collection.isFavorite,
+    updatedAt: collection.updatedAt,
     itemCount: 0,
     types: [],
     dominantColor: null,

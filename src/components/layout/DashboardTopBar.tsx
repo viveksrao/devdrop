@@ -1,7 +1,8 @@
 "use client";
 
-import { FolderPlus, Plus, Search, Settings } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { FolderPlus, Plus, Search, Settings, Star } from "lucide-react";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { useGlobalSearch } from "@/components/dashboard/GlobalSearchProvider";
@@ -52,6 +53,13 @@ export function DashboardTopBar({
           <Plus />
           New Item
         </Button>
+        <Link
+          href="/favorites"
+          aria-label="Favorites"
+          className={buttonVariants({ variant: "ghost", size: "icon" })}
+        >
+          <Star />
+        </Link>
         <Button variant="ghost" size="icon" aria-label="Settings">
           <Settings />
         </Button>

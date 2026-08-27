@@ -10,6 +10,7 @@ export interface ItemWithType {
   fileName: string | null;
   fileSize: number | null;
   createdAt: Date;
+  updatedAt: Date;
   isFavorite: boolean;
   isPinned: boolean;
   tags: string[];
@@ -30,6 +31,7 @@ export function toItemWithType(item: {
   fileName: string | null;
   fileSize: number | null;
   createdAt: Date;
+  updatedAt: Date;
   isFavorite: boolean;
   isPinned: boolean;
   tags: { name: string }[];
@@ -44,6 +46,7 @@ export function toItemWithType(item: {
     fileName: item.fileName,
     fileSize: item.fileSize,
     createdAt: item.createdAt,
+    updatedAt: item.updatedAt,
     isFavorite: item.isFavorite,
     isPinned: item.isPinned,
     tags: item.tags.map((tag) => tag.name),
@@ -66,6 +69,16 @@ export async function getRecentItems(userId: string, limit: number): Promise<Ite
     where: { userId },
     orderBy: { createdAt: "desc" },
     take: limit,
+    include: { itemType: true, tags: true },
+  });
+
+  return items.map(toItemWithType);
+}
+
+export async function getFavoriteItems(userId: string): Promise<ItemWithType[]> {
+  const items = await prisma.item.findMany({
+    where: { userId, isFavorite: true },
+    orderBy: { updatedAt: "desc" },
     include: { itemType: true, tags: true },
   });
 

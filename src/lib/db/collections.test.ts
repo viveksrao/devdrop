@@ -39,6 +39,7 @@ describe("createCollection", () => {
       name: "React Patterns",
       description: "Reusable hooks and patterns",
       isFavorite: false,
+      updatedAt: createdCollection.updatedAt,
       itemCount: 0,
       types: [],
       dominantColor: null,
@@ -173,11 +174,13 @@ describe("updateCollection", () => {
       createdAt: new Date("2026-01-01T00:00:00Z"),
       updatedAt: new Date("2026-01-01T00:00:00Z"),
     });
+    const updatedAt = new Date("2026-01-02T00:00:00Z");
     prismaMock.collection.update.mockResolvedValueOnce({
       id: "collection-1",
       name: "New name",
       description: "New description",
       isFavorite: false,
+      updatedAt,
       items: [],
     } as never);
 
@@ -196,6 +199,7 @@ describe("updateCollection", () => {
       name: "New name",
       description: "New description",
       isFavorite: false,
+      updatedAt,
       itemCount: 0,
       types: [],
       dominantColor: null,
