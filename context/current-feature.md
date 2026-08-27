@@ -2,15 +2,21 @@
 
 ## Status
 
-<!-- Not Started | In Progress | Complete -->
+Not Started
 
 ## Goals
 
-<!-- Bullet points of what success looks like -->
+- Create a new `/settings` page, protected (session-gated like `/profile`, `/dashboard`)
+- Add a "Settings" link to the user icon dropdown at the bottom of the sidebar (`SidebarUserFooter`), alongside the existing Profile link
+- Move Account actions — Change Password and Delete Account — from `/profile` to `/settings`
+- `/profile` keeps its identity/stats content (avatar, name/email, member-since, usage stats, type breakdown) but no longer shows `ChangePasswordForm`/`DeleteAccountDialog`
 
 ## Notes
 
-<!-- Additional context, constraints, or details from spec -->
+- Reuse existing components as-is: `ChangePasswordForm`, `DeleteAccountDialog`, and the existing `/api/auth/change-password` and `/api/auth/delete-account` routes — no new API/server-action logic needed, this is a UI relocation
+- Follow the same session-gating pattern as `/profile` (`auth()` + redirect to `/sign-in`)
+- `SidebarUserFooter`'s dropdown currently has a Profile link + sign-out; add Settings as a new item (likely between Profile and sign-out, or use a settings icon from lucide-react matching the dropdown's existing icon style)
+- Match existing page layout conventions (`DashboardShell`, `context/screenshots` styling reference not required for this since it's not on the main dashboard screenshot)
 
 ## History
 
