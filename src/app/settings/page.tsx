@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { auth } from "@/auth";
 import { ChangePasswordForm } from "@/components/profile/ChangePasswordForm";
 import { DeleteAccountDialog } from "@/components/profile/DeleteAccountDialog";
+import { EditorPreferencesForm } from "@/components/settings/EditorPreferencesForm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getUserProfile } from "@/lib/db/user";
 
@@ -30,6 +31,17 @@ export default async function SettingsPage() {
           Manage your account settings.
         </p>
       </div>
+
+      <section>
+        <Card>
+          <CardHeader>
+            <CardTitle>Editor preferences</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <EditorPreferencesForm />
+          </CardContent>
+        </Card>
+      </section>
 
       {profile.hasPassword && (
         <section>

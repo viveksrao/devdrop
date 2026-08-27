@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 import { ItemDrawerProvider } from "@/components/dashboard/ItemDrawerProvider";
 import { GlobalSearchProvider } from "@/components/dashboard/GlobalSearchProvider";
+import { EditorPreferencesProvider } from "@/components/dashboard/EditorPreferencesProvider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -33,9 +34,11 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <TooltipProvider>
-          <ItemDrawerProvider>
-            <GlobalSearchProvider>{children}</GlobalSearchProvider>
-          </ItemDrawerProvider>
+          <EditorPreferencesProvider>
+            <ItemDrawerProvider>
+              <GlobalSearchProvider>{children}</GlobalSearchProvider>
+            </ItemDrawerProvider>
+          </EditorPreferencesProvider>
         </TooltipProvider>
         <Toaster />
       </body>

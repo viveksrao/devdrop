@@ -1,14 +1,28 @@
-# Current Feature
+# Current Feature: Editor Preferences Settings
 
 ## Status
 
+Complete
+
 ## Goals
 
-<!-- Bullet points of what success looks like -->
+- Add an editor preferences section to the Settings page
+- Font size dropdown
+- Tab size dropdown
+- Word wrap toggle (default: on)
+- Minimap toggle (default: off)
+- Theme dropdown: vs-dark, monokai, github-dark (default: vs-dark)
+- Preferences persist to the database and apply to the Monaco-based `CodeEditor` component
+- Changes auto-save (no explicit save button) with a success toast on save
+- Preferences are available to client components via an `EditorPreferencesContext`
 
 ## Notes
 
-<!-- Additional context, constraints, or details from spec -->
+- Store preferences in a new JSON column `editorPreferences` on the `User` model
+- Requires a Prisma migration (`prisma migrate dev`, never `db push`), applied to the `development` Neon branch
+- Add a server action to update preferences (validate with Zod, follow the existing `{ success, data, error }` pattern)
+- Only `CodeEditor` (Monaco) is affected — `MarkdownEditor` (note/prompt) is out of scope
+- Monaco theme options are `vs-dark`, plus custom-defined `monokai` and `github-dark` themes (Monaco doesn't ship `github-dark`/`monokai` natively — will need `monaco.editor.defineTheme` or a community theme)
 
 ## History
 

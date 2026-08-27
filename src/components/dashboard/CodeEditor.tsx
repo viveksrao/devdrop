@@ -2,15 +2,58 @@
 
 import { useState } from "react";
 import dynamic from "next/dynamic";
-import type { OnMount } from "@monaco-editor/react";
+import type { BeforeMount, OnMount } from "@monaco-editor/react";
 import { Check, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useEditorPreferences } from "@/components/dashboard/EditorPreferencesProvider";
 
 const Editor = dynamic(() => import("@monaco-editor/react"), {
   ssr: false,
   loading: () => <div className="h-32 animate-pulse bg-[#1e1e1e]" />,
 });
+
+function defineMonacoThemes(monaco: Parameters<BeforeMount>[0]) {
+  monaco.editor.defineTheme("monokai", {
+    base: "vs-dark",
+    inherit: true,
+    rules: [
+      { token: "comment", foreground: "75715e" },
+      { token: "string", foreground: "e6db74" },
+      { token: "keyword", foreground: "f92672" },
+      { token: "number", foreground: "ae81ff" },
+      { token: "type", foreground: "66d9ef", fontStyle: "italic" },
+      { token: "function", foreground: "a6e22e" },
+    ],
+    colors: {
+      "editor.background": "#272822",
+      "editor.foreground": "#f8f8f2",
+      "editorLineNumber.foreground": "#75715e",
+      "editorCursor.foreground": "#f8f8f0",
+      "editor.selectionBackground": "#49483e",
+    },
+  });
+
+  monaco.editor.defineTheme("github-dark", {
+    base: "vs-dark",
+    inherit: true,
+    rules: [
+      { token: "comment", foreground: "8b949e" },
+      { token: "string", foreground: "a5d6ff" },
+      { token: "keyword", foreground: "ff7b72" },
+      { token: "number", foreground: "79c0ff" },
+      { token: "type", foreground: "ffa657" },
+      { token: "function", foreground: "d2a8ff" },
+    ],
+    colors: {
+      "editor.background": "#0d1117",
+      "editor.foreground": "#c9d1d9",
+      "editorLineNumber.foreground": "#6e7681",
+      "editorCursor.foreground": "#c9d1d9",
+      "editor.selectionBackground": "#3392ff44",
+    },
+  });
+}
 
 const MAX_HEIGHT = 400;
 const MIN_HEIGHT = 100;
@@ -32,6 +75,7 @@ export function CodeEditor({
 }: CodeEditorProps) {
   const [height, setHeight] = useState(MIN_HEIGHT);
   const [copied, setCopied] = useState(false);
+  const { preferences } = useEditorPreferences();
 
   function handleMount(...[editor]: Parameters<OnMount>) {
     const updateHeight = () => {
@@ -82,16 +126,18 @@ export function CodeEditor({
         value={value}
         onChange={(v) => onChange?.(v ?? "")}
         onMount={handleMount}
-        theme="vs-dark"
+        beforeMount={defineMonacoThemes}
+        theme={preferences.theme}
         options={{
           readOnly,
           domReadOnly: readOnly,
-          minimap: { enabled: false },
-          fontSize: 13,
+          minimap: { enabled: preferences.minimap },
+          fontSize: preferences.fontSize,
+          tabSize: preferences.tabSize,
           lineNumbers: "on",
           scrollBeyondLastLine: false,
           automaticLayout: true,
-          wordWrap: "on",
+          wordWrap: preferences.wordWrap ? "on" : "off",
           padding: { top: 12, bottom: 12 },
           scrollbar: {
             vertical: "auto",
