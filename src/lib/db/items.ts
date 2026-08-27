@@ -72,17 +72,31 @@ export async function getRecentItems(userId: string, limit: number): Promise<Ite
   return items.map(toItemWithType);
 }
 
+export interface PaginatedItems {
+  items: ItemWithType[];
+  totalCount: number;
+}
+
 export async function getItemsByType(
   userId: string,
-  typeName: string
-): Promise<ItemWithType[]> {
-  const items = await prisma.item.findMany({
-    where: { userId, itemType: { name: typeName } },
-    orderBy: { createdAt: "desc" },
-    include: { itemType: true, tags: true },
-  });
+  typeName: string,
+  page: number,
+  pageSize: number
+): Promise<PaginatedItems> {
+  const where = { userId, itemType: { name: typeName } };
 
-  return items.map(toItemWithType);
+  const [items, totalCount] = await Promise.all([
+    prisma.item.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      include: { itemType: true, tags: true },
+    }),
+    prisma.item.count({ where }),
+  ]);
+
+  return { items: items.map(toItemWithType), totalCount };
 }
 
 export interface ItemDetail {

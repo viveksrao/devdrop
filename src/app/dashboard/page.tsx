@@ -3,12 +3,11 @@ import { DashboardShell } from "@/components/layout/DashboardShell";
 import { DashboardMain } from "@/components/dashboard/DashboardMain";
 import { getSystemItemTypes, getPinnedItems, getRecentItems, getItemStats } from "@/lib/db/items";
 import { getRecentCollections, getCollectionStats, getAllCollections } from "@/lib/db/collections";
+import { DASHBOARD_COLLECTIONS_LIMIT, DASHBOARD_RECENT_ITEMS_LIMIT } from "@/lib/constants/pagination";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 
 const SIDEBAR_RECENT_COLLECTIONS_COUNT = 5;
-const MAIN_RECENT_COLLECTIONS_COUNT = 6;
-const RECENT_ITEMS_COUNT = 10;
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -31,10 +30,10 @@ export default async function DashboardPage() {
   ] = await Promise.all([
     getSystemItemTypes(user.id),
     getRecentCollections(user.id, SIDEBAR_RECENT_COLLECTIONS_COUNT),
-    getRecentCollections(user.id, MAIN_RECENT_COLLECTIONS_COUNT),
+    getRecentCollections(user.id, DASHBOARD_COLLECTIONS_LIMIT),
     getAllCollections(user.id),
     getPinnedItems(user.id),
-    getRecentItems(user.id, RECENT_ITEMS_COUNT),
+    getRecentItems(user.id, DASHBOARD_RECENT_ITEMS_LIMIT),
     getItemStats(user.id),
     getCollectionStats(user.id),
   ]);

@@ -3,6 +3,7 @@ import { prismaMock } from "@/lib/__mocks__/prisma";
 import {
   createCollection,
   getAllCollections,
+  getCollectionDetail,
   updateCollection,
   deleteCollection,
 } from "./collections";
@@ -61,6 +62,87 @@ describe("getAllCollections", () => {
       select: { id: true, name: true },
     });
     expect(result).toEqual(collections);
+  });
+});
+
+describe("getCollectionDetail", () => {
+  it("returns null when the collection is not found or not owned by the user", async () => {
+    prismaMock.collection.findFirst.mockResolvedValueOnce(null);
+
+    const result = await getCollectionDetail("user-1", "collection-1", 1, 21);
+
+    expect(result).toBeNull();
+  });
+
+  it("paginates the collection's items via skip/take and returns the total item count", async () => {
+    const item = {
+      id: "item-1",
+      title: "useAuth hook",
+      description: null,
+      contentType: "TEXT",
+      fileUrl: null,
+      fileName: null,
+      fileSize: null,
+      createdAt: new Date("2026-01-01T00:00:00Z"),
+      isFavorite: false,
+      isPinned: false,
+      tags: [],
+      itemType: { id: "type-1", name: "snippet", icon: "Code", color: "#3b82f6" },
+    };
+    prismaMock.collection.findFirst.mockResolvedValueOnce({
+      id: "collection-1",
+      name: "React Patterns",
+      description: null,
+      isFavorite: false,
+      items: [{ item }],
+      _count: { items: 30 },
+    } as never);
+
+    const result = await getCollectionDetail("user-1", "collection-1", 2, 21);
+
+    expect(prismaMock.collection.findFirst).toHaveBeenCalledWith({
+      where: { id: "collection-1", userId: "user-1" },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        isFavorite: true,
+        items: {
+          orderBy: { item: { createdAt: "desc" } },
+          skip: 21,
+          take: 21,
+          select: {
+            item: {
+              include: { itemType: true, tags: true },
+            },
+          },
+        },
+        _count: { select: { items: true } },
+      },
+    });
+    expect(result).toEqual({
+      id: "collection-1",
+      name: "React Patterns",
+      description: null,
+      isFavorite: false,
+      items: [
+        {
+          id: "item-1",
+          title: "useAuth hook",
+          description: null,
+          contentType: "TEXT",
+          fileUrl: null,
+          fileName: null,
+          fileSize: null,
+          createdAt: item.createdAt,
+          isFavorite: false,
+          isPinned: false,
+          tags: [],
+          itemType: item.itemType,
+        },
+      ],
+      totalItemCount: 30,
+    });
   });
 });
 

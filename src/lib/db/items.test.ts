@@ -1,6 +1,13 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { prismaMock } from "@/lib/__mocks__/prisma";
-import { createItem, deleteItem, getItemDetail, getItemStats, updateItem } from "./items";
+import {
+  createItem,
+  deleteItem,
+  getItemDetail,
+  getItemsByType,
+  getItemStats,
+  updateItem,
+} from "./items";
 
 const mockDeleteFileFromR2 = vi.fn();
 
@@ -23,6 +30,58 @@ describe("getItemStats", () => {
     expect(prismaMock.item.count).toHaveBeenNthCalledWith(1, { where: { userId: "user-1" } });
     expect(prismaMock.item.count).toHaveBeenNthCalledWith(2, {
       where: { userId: "user-1", isFavorite: true },
+    });
+  });
+});
+
+describe("getItemsByType", () => {
+  it("paginates via skip/take and returns the total count for the type", async () => {
+    const item = {
+      id: "item-1",
+      title: "useAuth hook",
+      description: null,
+      contentType: "TEXT" as const,
+      fileUrl: null,
+      fileName: null,
+      fileSize: null,
+      createdAt: new Date("2026-01-01T00:00:00Z"),
+      isFavorite: false,
+      isPinned: false,
+      tags: [],
+      itemType: { id: "type-1", name: "snippet", icon: "Code", color: "#3b82f6" },
+    };
+    prismaMock.item.findMany.mockResolvedValueOnce([item]);
+    prismaMock.item.count.mockResolvedValueOnce(45);
+
+    const result = await getItemsByType("user-1", "snippet", 3, 21);
+
+    const where = { userId: "user-1", itemType: { name: "snippet" } };
+    expect(prismaMock.item.findMany).toHaveBeenCalledWith({
+      where,
+      orderBy: { createdAt: "desc" },
+      skip: 42,
+      take: 21,
+      include: { itemType: true, tags: true },
+    });
+    expect(prismaMock.item.count).toHaveBeenCalledWith({ where });
+    expect(result).toEqual({
+      items: [
+        {
+          id: "item-1",
+          title: "useAuth hook",
+          description: null,
+          contentType: "TEXT",
+          fileUrl: null,
+          fileName: null,
+          fileSize: null,
+          createdAt: item.createdAt,
+          isFavorite: false,
+          isPinned: false,
+          tags: [],
+          itemType: item.itemType,
+        },
+      ],
+      totalCount: 45,
     });
   });
 });

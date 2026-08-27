@@ -128,11 +128,14 @@ export interface CollectionDetail {
   description: string | null;
   isFavorite: boolean;
   items: ItemWithType[];
+  totalItemCount: number;
 }
 
 export async function getCollectionDetail(
   userId: string,
-  collectionId: string
+  collectionId: string,
+  page: number,
+  pageSize: number
 ): Promise<CollectionDetail | null> {
   const collection = await prisma.collection.findFirst({
     where: { id: collectionId, userId },
@@ -143,12 +146,15 @@ export async function getCollectionDetail(
       isFavorite: true,
       items: {
         orderBy: { item: { createdAt: "desc" } },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
         select: {
           item: {
             include: { itemType: true, tags: true },
           },
         },
       },
+      _count: { select: { items: true } },
     },
   });
 
@@ -160,6 +166,7 @@ export async function getCollectionDetail(
     description: collection.description,
     isFavorite: collection.isFavorite,
     items: collection.items.map(({ item }) => toItemWithType(item)),
+    totalItemCount: collection._count.items,
   };
 }
 

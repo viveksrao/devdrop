@@ -5,6 +5,8 @@ import { ItemCard } from "@/components/dashboard/ItemCard";
 import { ImageCard } from "@/components/dashboard/ImageCard";
 import { FileListItem } from "@/components/dashboard/FileListItem";
 import { CollectionDetailHeader } from "@/components/dashboard/CollectionDetailHeader";
+import { Pagination } from "@/components/dashboard/Pagination";
+import { COLLECTIONS_PER_PAGE } from "@/lib/constants/pagination";
 import { getSystemItemTypes } from "@/lib/db/items";
 import {
   getCollectionDetail,
@@ -17,10 +19,16 @@ const SIDEBAR_RECENT_COLLECTIONS_COUNT = 5;
 
 interface CollectionDetailPageProps {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ page?: string }>;
 }
 
-export default async function CollectionDetailPage({ params }: CollectionDetailPageProps) {
+export default async function CollectionDetailPage({
+  params,
+  searchParams,
+}: CollectionDetailPageProps) {
   const { id } = await params;
+  const { page: pageParam } = await searchParams;
+  const page = Math.max(1, Number(pageParam) || 1);
 
   const session = await auth();
   if (!session?.user) redirect("/sign-in");
@@ -29,7 +37,7 @@ export default async function CollectionDetailPage({ params }: CollectionDetailP
   if (!user) redirect("/sign-in");
 
   const [collection, itemTypes, sidebarRecentCollections, allCollections] = await Promise.all([
-    getCollectionDetail(user.id, id),
+    getCollectionDetail(user.id, id, page, COLLECTIONS_PER_PAGE),
     getSystemItemTypes(user.id),
     getRecentCollections(user.id, SIDEBAR_RECENT_COLLECTIONS_COUNT),
     getAllCollections(user.id),
@@ -37,6 +45,7 @@ export default async function CollectionDetailPage({ params }: CollectionDetailP
 
   if (!collection) notFound();
 
+  const totalPages = Math.ceil(collection.totalItemCount / COLLECTIONS_PER_PAGE);
   const fileItems = collection.items.filter((item) => item.itemType.name === "file");
   const otherItems = collection.items.filter((item) => item.itemType.name !== "file");
 
@@ -53,9 +62,9 @@ export default async function CollectionDetailPage({ params }: CollectionDetailP
       }}
     >
       <div className="flex flex-col gap-6">
-        <CollectionDetailHeader collection={collection} itemCount={collection.items.length} />
+        <CollectionDetailHeader collection={collection} itemCount={collection.totalItemCount} />
 
-        {collection.items.length === 0 ? (
+        {collection.totalItemCount === 0 ? (
           <p className="text-sm text-muted-foreground">No items in this collection yet.</p>
         ) : (
           <div className="flex flex-col gap-6">
@@ -79,6 +88,8 @@ export default async function CollectionDetailPage({ params }: CollectionDetailP
             )}
           </div>
         )}
+
+        <Pagination currentPage={page} totalPages={totalPages} basePath={`/collections/${id}`} />
       </div>
     </DashboardShell>
   );

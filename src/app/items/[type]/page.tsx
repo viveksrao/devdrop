@@ -4,7 +4,9 @@ import { DashboardShell } from "@/components/layout/DashboardShell";
 import { ItemCard } from "@/components/dashboard/ItemCard";
 import { ImageCard } from "@/components/dashboard/ImageCard";
 import { FileListItem } from "@/components/dashboard/FileListItem";
+import { Pagination } from "@/components/dashboard/Pagination";
 import { getItemTypeNameFromSlug, ITEM_TYPE_LABELS } from "@/lib/constants/item-types";
+import { ITEMS_PER_PAGE } from "@/lib/constants/pagination";
 import { getItemsByType, getSystemItemTypes } from "@/lib/db/items";
 import { getRecentCollections, getAllCollections } from "@/lib/db/collections";
 import { prisma } from "@/lib/prisma";
@@ -13,12 +15,16 @@ const SIDEBAR_RECENT_COLLECTIONS_COUNT = 5;
 
 interface ItemsByTypePageProps {
   params: Promise<{ type: string }>;
+  searchParams: Promise<{ page?: string }>;
 }
 
-export default async function ItemsByTypePage({ params }: ItemsByTypePageProps) {
+export default async function ItemsByTypePage({ params, searchParams }: ItemsByTypePageProps) {
   const { type } = await params;
   const typeName = getItemTypeNameFromSlug(type);
   if (!typeName) notFound();
+
+  const { page: pageParam } = await searchParams;
+  const page = Math.max(1, Number(pageParam) || 1);
 
   const session = await auth();
   if (!session?.user) redirect("/sign-in");
@@ -26,14 +32,15 @@ export default async function ItemsByTypePage({ params }: ItemsByTypePageProps) 
   const user = await prisma.user.findUnique({ where: { id: session.user.id } });
   if (!user) redirect("/sign-in");
 
-  const [items, itemTypes, recentCollections, allCollections] = await Promise.all([
-    getItemsByType(user.id, typeName),
+  const [{ items, totalCount }, itemTypes, recentCollections, allCollections] = await Promise.all([
+    getItemsByType(user.id, typeName, page, ITEMS_PER_PAGE),
     getSystemItemTypes(user.id),
     getRecentCollections(user.id, SIDEBAR_RECENT_COLLECTIONS_COUNT),
     getAllCollections(user.id),
   ]);
 
   const label = ITEM_TYPE_LABELS[typeName] ?? typeName;
+  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
 
   return (
     <DashboardShell
@@ -51,11 +58,11 @@ export default async function ItemsByTypePage({ params }: ItemsByTypePageProps) 
         <div>
           <h1 className="text-2xl font-semibold">{label}</h1>
           <p className="mt-1 text-muted-foreground">
-            {items.length} {items.length === 1 ? "item" : "items"}
+            {totalCount} {totalCount === 1 ? "item" : "items"}
           </p>
         </div>
 
-        {items.length === 0 ? (
+        {totalCount === 0 ? (
           <p className="text-sm text-muted-foreground">
             No {label.toLowerCase()} yet.
           </p>
@@ -78,6 +85,8 @@ export default async function ItemsByTypePage({ params }: ItemsByTypePageProps) 
             ))}
           </div>
         )}
+
+        <Pagination currentPage={page} totalPages={totalPages} basePath={`/items/${type}`} />
       </div>
     </DashboardShell>
   );
