@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DevDrop — Stop Losing Your Developer Knowledge</title>
+  <meta name="description" content="DevDrop is a unified hub for developer knowledge: snippets, prompts, commands, notes, files, images, and links." />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- Navigation -->
+  <header class="navbar" id="navbar">
+    <div class="container navbar__inner">
+      <a href="#" class="navbar__logo">
+        <span class="navbar__logo-mark">&lt;/&gt;</span>
+        DevDrop
+      </a>
+      <nav class="navbar__links">
+        <a href="#features">Features</a>
+        <a href="#pricing">Pricing</a>
+      </nav>
+      <div class="navbar__actions">
+        <a href="#" class="btn btn--ghost">Sign In</a>
+        <a href="#" class="btn btn--primary">Get Started</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Hero -->
+    <section class="hero">
+      <div class="container">
+        <div class="hero__text fade-in">
+          <span class="eyebrow">Developer Knowledge Hub</span>
+          <h1 class="hero__headline">
+            Stop Losing Your <span class="gradient-text">Developer Knowledge</span>
+          </h1>
+          <p class="hero__subhead">
+            Snippets, prompts, commands, notes, files, and links — scattered across a dozen tools.
+            DevDrop brings it all into one fast, searchable, AI-enhanced hub.
+          </p>
+          <div class="hero__cta">
+            <a href="#" class="btn btn--primary btn--lg">Get Started Free</a>
+            <a href="#features" class="btn btn--ghost btn--lg">See Features</a>
+          </div>
+        </div>
+
+        <!-- Chaos to Order Visual -->
+        <div class="chaos-order fade-in">
+          <div class="chaos-order__panel chaos-order__panel--chaos">
+            <span class="chaos-order__label">Your knowledge today...</span>
+            <div class="chaos-box" id="chaosBox">
+              <!-- icons injected by script.js -->
+            </div>
+          </div>
+
+          <div class="chaos-order__arrow-wrap">
+            <svg class="chaos-order__arrow" id="transformArrow" viewBox="0 0 60 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M2 12H52" stroke="url(#arrowGradient)" stroke-width="3" stroke-linecap="round"/>
+              <path d="M42 3L54 12L42 21" stroke="url(#arrowGradient)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+              <defs>
+                <linearGradient id="arrowGradient" x1="0" y1="0" x2="60" y2="0" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#3b82f6"/>
+                  <stop offset="1" stop-color="#ec4899"/>
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+
+          <div class="chaos-order__panel chaos-order__panel--order">
+            <span class="chaos-order__label">...with DevDrop</span>
+            <div class="dashboard-mock">
+              <div class="dashboard-mock__sidebar">
+                <div class="dashboard-mock__logo"></div>
+                <div class="dashboard-mock__nav-item dashboard-mock__nav-item--active"><span class="dot" style="background:#3b82f6"></span></div>
+                <div class="dashboard-mock__nav-item"><span class="dot" style="background:#f59e0b"></span></div>
+                <div class="dashboard-mock__nav-item"><span class="dot" style="background:#06b6d4"></span></div>
+                <div class="dashboard-mock__nav-item"><span class="dot" style="background:#22c55e"></span></div>
+                <div class="dashboard-mock__nav-item"><span class="dot" style="background:#ec4899"></span></div>
+              </div>
+              <div class="dashboard-mock__main">
+                <div class="dashboard-mock__searchbar"></div>
+                <div class="dashboard-mock__grid">
+                  <div class="dashboard-mock__card" style="--card-color:#3b82f6"></div>
+                  <div class="dashboard-mock__card" style="--card-color:#f59e0b"></div>
+                  <div class="dashboard-mock__card" style="--card-color:#06b6d4"></div>
+                  <div class="dashboard-mock__card" style="--card-color:#22c55e"></div>
+                  <div class="dashboard-mock__card" style="--card-color:#ec4899"></div>
+                  <div class="dashboard-mock__card" style="--card-color:#6366f1"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section class="features" id="features">
+      <div class="container">
+        <div class="section-heading fade-in">
+          <span class="eyebrow">Features</span>
+          <h2>Everything in one place</h2>
+          <p>One hub for every type of knowledge you collect as a developer.</p>
+        </div>
+
+        <div class="features__grid">
+          <div class="feature-card fade-in" style="--accent:#3b82f6">
+            <div class="feature-card__icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            </div>
+            <h3>Code Snippets</h3>
+            <p>Save and organize reusable code with syntax highlighting for any language.</p>
+          </div>
+
+          <div class="feature-card fade-in" style="--accent:#f59e0b">
+            <div class="feature-card__icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.912 5.813a2 2 0 0 0 1.275 1.275L21 12l-5.813 1.912a2 2 0 0 0-1.275 1.275L12 21l-1.912-5.813a2 2 0 0 0-1.275-1.275L3 12l5.813-1.912a2 2 0 0 0 1.275-1.275L12 3z"/></svg>
+            </div>
+            <h3>AI Prompts</h3>
+            <p>Keep your best prompts, contexts, and system messages ready to reuse.</p>
+          </div>
+
+          <div class="feature-card fade-in" style="--accent:#8b5cf6">
+            <div class="feature-card__icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </div>
+            <h3>Instant Search</h3>
+            <p>Find anything in seconds — search across content, tags, titles, and types.</p>
+          </div>
+
+          <div class="feature-card fade-in" style="--accent:#06b6d4">
+            <div class="feature-card__icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+            </div>
+            <h3>Commands</h3>
+            <p>Stop digging through bash history — store the commands you actually reuse.</p>
+          </div>
+
+          <div class="feature-card fade-in" style="--accent:#64748b">
+            <div class="feature-card__icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            </div>
+            <h3>Files &amp; Docs</h3>
+            <p>Upload files and images so your reference material lives right alongside your notes.</p>
+          </div>
+
+          <div class="feature-card fade-in" style="--accent:#ec4899">
+            <div class="feature-card__icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/></svg>
+            </div>
+            <h3>Collections</h3>
+            <p>Group snippets, notes, and links into collections for any project or topic.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- AI Section -->
+    <section class="ai-section">
+      <div class="container ai-section__inner">
+        <div class="ai-section__text fade-in">
+          <span class="badge badge--pro">Pro Feature</span>
+          <h2>Let AI do the tagging</h2>
+          <p>Save time on the busywork so you can get back to building.</p>
+          <ul class="checklist">
+            <li><span class="checklist__icon">✓</span> AI auto-tag suggestions</li>
+            <li><span class="checklist__icon">✓</span> AI-generated summaries</li>
+            <li><span class="checklist__icon">✓</span> "Explain This Code" on demand</li>
+            <li><span class="checklist__icon">✓</span> AI prompt optimizer</li>
+          </ul>
+        </div>
+
+        <div class="ai-section__visual fade-in">
+          <div class="editor-mock">
+            <div class="editor-mock__header">
+              <span class="dot dot--red"></span>
+              <span class="dot dot--yellow"></span>
+              <span class="dot dot--green"></span>
+              <span class="editor-mock__filename">useDebounce.ts</span>
+            </div>
+            <div class="editor-mock__body">
+              <pre><code><span class="tok-kw">export function</span> <span class="tok-fn">useDebounce</span><span class="tok-punc">&lt;</span><span class="tok-type">T</span><span class="tok-punc">&gt;(</span><span class="tok-var">value</span><span class="tok-punc">:</span> <span class="tok-type">T</span><span class="tok-punc">,</span> <span class="tok-var">delay</span><span class="tok-punc">:</span> <span class="tok-type">number</span><span class="tok-punc">) {</span>
+  <span class="tok-kw">const</span> <span class="tok-punc">[</span><span class="tok-var">debounced</span><span class="tok-punc">,</span> <span class="tok-var">setDebounced</span><span class="tok-punc">] =</span> <span class="tok-fn">useState</span><span class="tok-punc">(</span><span class="tok-var">value</span><span class="tok-punc">);</span>
+
+  <span class="tok-fn">useEffect</span><span class="tok-punc">(() => {</span>
+    <span class="tok-kw">const</span> <span class="tok-var">id</span> <span class="tok-punc">=</span> <span class="tok-fn">setTimeout</span><span class="tok-punc">(() =></span> <span class="tok-fn">setDebounced</span><span class="tok-punc">(</span><span class="tok-var">value</span><span class="tok-punc">),</span> <span class="tok-var">delay</span><span class="tok-punc">);</span>
+    <span class="tok-kw">return</span> <span class="tok-punc">() =></span> <span class="tok-fn">clearTimeout</span><span class="tok-punc">(</span><span class="tok-var">id</span><span class="tok-punc">);</span>
+  <span class="tok-punc">}, [</span><span class="tok-var">value</span><span class="tok-punc">,</span> <span class="tok-var">delay</span><span class="tok-punc">]);</span>
+
+  <span class="tok-kw">return</span> <span class="tok-var">debounced</span><span class="tok-punc">;</span>
+<span class="tok-punc">}</span></code></pre>
+            </div>
+            <div class="editor-mock__tags">
+              <span class="editor-mock__tags-label">✨ AI Generated Tags</span>
+              <div class="tag-pill-row">
+                <span class="tag-pill">react</span>
+                <span class="tag-pill">hooks</span>
+                <span class="tag-pill">typescript</span>
+                <span class="tag-pill">debounce</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pricing -->
+    <section class="pricing" id="pricing">
+      <div class="container">
+        <div class="section-heading fade-in">
+          <span class="eyebrow">Pricing</span>
+          <h2>Simple, honest pricing</h2>
+          <p>Start free. Upgrade when you need more.</p>
+
+          <div class="pricing-toggle">
+            <span class="pricing-toggle__label" data-period-label="monthly">Monthly</span>
+            <button class="pricing-toggle__switch" id="pricingToggle" type="button" role="switch" aria-checked="false" aria-label="Toggle yearly pricing">
+              <span class="pricing-toggle__thumb"></span>
+            </button>
+            <span class="pricing-toggle__label" data-period-label="yearly">Yearly <span class="pricing-toggle__save">Save 25%</span></span>
+          </div>
+        </div>
+
+        <div class="pricing__grid">
+          <div class="pricing-card fade-in">
+            <h3>Free</h3>
+            <p class="pricing-card__price"><span class="pricing-card__amount">$0</span><span class="pricing-card__period">/mo</span></p>
+            <p class="pricing-card__desc">For getting your knowledge out of your head.</p>
+            <ul class="pricing-card__features">
+              <li>50 items total</li>
+              <li>3 collections</li>
+              <li>Snippets, Prompts, Commands, Notes, Links</li>
+              <li>Basic search</li>
+            </ul>
+            <a href="#" class="btn btn--ghost btn--block">Get Started</a>
+          </div>
+
+          <div class="pricing-card pricing-card--highlight fade-in">
+            <span class="badge badge--popular">Most Popular</span>
+            <h3>Pro</h3>
+            <p class="pricing-card__price">
+              <span class="pricing-card__amount" data-price-monthly="$8" data-price-yearly="$72">$8</span>
+              <span class="pricing-card__period" data-period-monthly="/mo" data-period-yearly="/yr">/mo</span>
+            </p>
+            <p class="pricing-card__desc">For developers who never want to lose a snippet again.</p>
+            <ul class="pricing-card__features">
+              <li>Unlimited items</li>
+              <li>Unlimited collections</li>
+              <li>File &amp; image uploads</li>
+              <li>AI auto-tagging &amp; summaries</li>
+              <li>AI code explanation &amp; prompt optimizer</li>
+              <li>Data export (JSON/ZIP)</li>
+              <li>Priority support</li>
+            </ul>
+            <a href="#" class="btn btn--primary btn--block">Start Free Trial</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta">
+      <div class="container cta__inner fade-in">
+        <h2>Ready to Organize Your Knowledge?</h2>
+        <p>Join developers who stopped losing snippets, prompts, and links to chat histories and browser tabs.</p>
+        <a href="#" class="btn btn--primary btn--lg">Get Started Free</a>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container footer__inner">
+      <div class="footer__brand">
+        <a href="#" class="navbar__logo">
+          <span class="navbar__logo-mark">&lt;/&gt;</span>
+          DevDrop
+        </a>
+        <p>Your unified hub for developer knowledge &amp; resources.</p>
+      </div>
+
+      <div class="footer__col">
+        <h4>Product</h4>
+        <a href="#features">Features</a>
+        <a href="#pricing">Pricing</a>
+        <a href="#">Changelog</a>
+      </div>
+
+      <div class="footer__col">
+        <h4>Company</h4>
+        <a href="#">About</a>
+        <a href="#">Blog</a>
+        <a href="#">Contact</a>
+      </div>
+
+      <div class="footer__col">
+        <h4>Legal</h4>
+        <a href="#">Privacy</a>
+        <a href="#">Terms</a>
+      </div>
+    </div>
+    <div class="container footer__bottom">
+      <p>&copy; <span id="year"></span> DevDrop. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

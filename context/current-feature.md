@@ -1,14 +1,22 @@
-# Current Feature
+# Homepage Mockup
 
 ## Status
 
+In Progress
+
 ## Goals
 
-<!-- Bullet points of what success looks like -->
+- Marketing homepage prototype for DevDrop at `prototypes/homepage/` (`index.html`, `styles.css`, `script.js`) — standalone static HTML/CSS/JS, not part of the Next.js app
+- Hero section with "chaos to order" visual: animated floating icons (Notion, GitHub, Slack, VS Code, browser tabs, terminal, text file, bookmark) in a "Your knowledge today..." box, a pulsing transform arrow, and a "...with DevDrop" simplified dashboard mockup (sidebar + colored item cards)
+- Sections: Navigation, Hero Text (gradient headline + CTAs), Features (6 cards), AI Section (Pro feature checklist + code editor mockup), Pricing (Free vs Pro, monthly/yearly toggle), CTA, Footer
+- Chaos icons animate via `requestAnimationFrame`: drift, bounce off walls, repel from mouse cursor; arrow pulses via CSS; sections fade in on scroll; navbar opacity increases on scroll
+- Fully responsive: chaos/arrow/dashboard stack vertically on mobile (arrow rotates 90°), grids collapse to single column
 
 ## Notes
 
-<!-- Additional context, constraints, or details from spec -->
+- Dark theme; item type accent colors: Snippet `#3b82f6`, Prompt `#f59e0b`, Command `#06b6d4`, Note `#22c55e`, File `#64748b`, Image `#ec4899`, URL `#6366f1`
+- Full spec: @context/features/homepage-mockup-spec.md
+- This is a visual/marketing prototype — no Prisma/server-action/auth work, so the usual "unit test server actions/utilities" step in the workflow doesn't apply; verification will be in-browser only
 
 ## History
 
