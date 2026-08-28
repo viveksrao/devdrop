@@ -7,6 +7,7 @@ import {
   deleteItem as deleteItemInDb,
   createItem as createItemInDb,
   toggleItemFavorite as toggleItemFavoriteInDb,
+  toggleItemPin as toggleItemPinInDb,
 } from "@/lib/db/items";
 import type { ItemDetail } from "@/lib/db/items";
 
@@ -186,6 +187,26 @@ export async function toggleItemFavorite(itemId: string): Promise<ActionResult<I
     return { success: true, data: updated };
   } catch (error) {
     console.error("Failed to toggle item favorite:", error);
+    return { success: false, error: "Something went wrong" };
+  }
+}
+
+export async function toggleItemPin(itemId: string): Promise<ActionResult<ItemDetail>> {
+  const session = await auth();
+  if (!session?.user) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  try {
+    const updated = await toggleItemPinInDb(session.user.id, itemId);
+
+    if (!updated) {
+      return { success: false, error: "Item not found" };
+    }
+
+    return { success: true, data: updated };
+  } catch (error) {
+    console.error("Failed to toggle item pin:", error);
     return { success: false, error: "Something went wrong" };
   }
 }

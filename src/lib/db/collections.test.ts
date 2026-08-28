@@ -110,7 +110,7 @@ describe("getCollectionDetail", () => {
         description: true,
         isFavorite: true,
         items: {
-          orderBy: { item: { createdAt: "desc" } },
+          orderBy: [{ item: { isPinned: "desc" } }, { item: { createdAt: "desc" } }],
           skip: 21,
           take: 21,
           select: {

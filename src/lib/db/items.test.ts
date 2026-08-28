@@ -7,6 +7,7 @@ import {
   getItemsByType,
   getItemStats,
   toggleItemFavorite,
+  toggleItemPin,
   updateItem,
 } from "./items";
 
@@ -60,7 +61,7 @@ describe("getItemsByType", () => {
     const where = { userId: "user-1", itemType: { name: "snippet" } };
     expect(prismaMock.item.findMany).toHaveBeenCalledWith({
       where,
-      orderBy: { createdAt: "desc" },
+      orderBy: [{ isPinned: "desc" }, { createdAt: "desc" }],
       skip: 42,
       take: 21,
       include: { itemType: true, tags: true },
@@ -523,6 +524,68 @@ describe("toggleItemFavorite", () => {
 
     expect(prismaMock.item.update).toHaveBeenCalledWith(
       expect.objectContaining({ data: { isFavorite: false } })
+    );
+  });
+});
+
+describe("toggleItemPin", () => {
+  const toggledItem = {
+    id: "item-1",
+    title: "useAuth hook",
+    description: null,
+    contentType: "TEXT" as const,
+    content: null,
+    fileUrl: null,
+    fileName: null,
+    fileSize: null,
+    url: null,
+    language: null,
+    isFavorite: false,
+    isPinned: true,
+    createdAt: new Date("2026-01-01T00:00:00Z"),
+    updatedAt: new Date("2026-01-03T00:00:00Z"),
+    itemType: { id: "type-1", name: "snippet", icon: "Code", color: "#3b82f6" },
+    tags: [],
+    collections: [],
+  };
+
+  it("returns null when the item doesn't exist or belongs to another user", async () => {
+    prismaMock.item.findFirst.mockResolvedValueOnce(null);
+
+    const result = await toggleItemPin("user-1", "item-404");
+
+    expect(result).toBeNull();
+    expect(prismaMock.item.update).not.toHaveBeenCalled();
+  });
+
+  it("flips isPinned from false to true", async () => {
+    prismaMock.item.findFirst.mockResolvedValueOnce({
+      id: "item-1",
+      isPinned: false,
+    } as never);
+    prismaMock.item.update.mockResolvedValueOnce(toggledItem);
+
+    const result = await toggleItemPin("user-1", "item-1");
+
+    expect(prismaMock.item.update).toHaveBeenCalledWith({
+      where: { id: "item-1" },
+      data: { isPinned: true },
+      include: { itemType: true, tags: true, collections: { include: { collection: true } } },
+    });
+    expect(result?.isPinned).toBe(true);
+  });
+
+  it("flips isPinned from true to false", async () => {
+    prismaMock.item.findFirst.mockResolvedValueOnce({
+      id: "item-1",
+      isPinned: true,
+    } as never);
+    prismaMock.item.update.mockResolvedValueOnce({ ...toggledItem, isPinned: false });
+
+    await toggleItemPin("user-1", "item-1");
+
+    expect(prismaMock.item.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { isPinned: false } })
     );
   });
 });

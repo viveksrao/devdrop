@@ -28,7 +28,7 @@ import { ItemDetailView } from "@/components/dashboard/ItemDetailView";
 import { ITEM_TYPE_ICONS, ITEM_TYPE_LABELS } from "@/lib/constants/item-types";
 import type { ItemDetail } from "@/lib/db/items";
 import type { CollectionOption } from "@/lib/db/collections";
-import { updateItem, deleteItem, toggleItemFavorite } from "@/actions/items";
+import { updateItem, deleteItem, toggleItemFavorite, toggleItemPin } from "@/actions/items";
 
 function toEditFormState(item: ItemDetail): ItemEditFormState {
   return {
@@ -60,6 +60,7 @@ export function ItemDrawer({ itemId, open, onOpenChange }: ItemDrawerProps) {
   const [copied, setCopied] = useState(false);
   const [allCollections, setAllCollections] = useState<CollectionOption[]>([]);
   const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
+  const [isTogglingPin, setIsTogglingPin] = useState(false);
 
   if (isEditing && editingForItemId !== itemId) {
     setIsEditing(false);
@@ -187,6 +188,27 @@ export function ItemDrawer({ itemId, open, onOpenChange }: ItemDrawerProps) {
     router.refresh();
   }
 
+  async function handleTogglePin() {
+    if (!item || isTogglingPin) return;
+
+    const previousItem = item;
+    setIsTogglingPin(true);
+    setItem({ ...item, isPinned: !item.isPinned });
+
+    const result = await toggleItemPin(item.id);
+    setIsTogglingPin(false);
+
+    if (!result.success || !result.data) {
+      setItem(previousItem);
+      toast.error(result.error ?? "Failed to update pin");
+      return;
+    }
+
+    setItem(result.data);
+    toast.success(result.data.isPinned ? "Item pinned" : "Item unpinned");
+    router.refresh();
+  }
+
   async function handleDelete() {
     if (!item) return;
 
@@ -257,8 +279,14 @@ export function ItemDrawer({ itemId, open, onOpenChange }: ItemDrawerProps) {
                   <Star className={item.isFavorite ? "fill-yellow-500" : undefined} />
                   Favorite
                 </Button>
-                <Button variant="ghost" size="sm">
-                  <Pin />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={item.isPinned ? "text-primary" : undefined}
+                  disabled={isTogglingPin}
+                  onClick={handleTogglePin}
+                >
+                  <Pin className={item.isPinned ? "fill-primary" : undefined} />
                   Pin
                 </Button>
                 <AlertDialog>

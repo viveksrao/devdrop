@@ -159,7 +159,7 @@ export async function getCollectionDetail(
       description: true,
       isFavorite: true,
       items: {
-        orderBy: { item: { createdAt: "desc" } },
+        orderBy: [{ item: { isPinned: "desc" } }, { item: { createdAt: "desc" } }],
         skip: (page - 1) * pageSize,
         take: pageSize,
         select: {

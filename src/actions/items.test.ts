@@ -5,6 +5,7 @@ const mockUpdateItemInDb = vi.fn();
 const mockDeleteItemInDb = vi.fn();
 const mockCreateItemInDb = vi.fn();
 const mockToggleItemFavoriteInDb = vi.fn();
+const mockToggleItemPinInDb = vi.fn();
 
 vi.mock("@/auth", () => ({ auth: mockAuth }));
 vi.mock("@/lib/db/items", () => ({
@@ -12,9 +13,12 @@ vi.mock("@/lib/db/items", () => ({
   deleteItem: mockDeleteItemInDb,
   createItem: mockCreateItemInDb,
   toggleItemFavorite: mockToggleItemFavoriteInDb,
+  toggleItemPin: mockToggleItemPinInDb,
 }));
 
-const { updateItem, deleteItem, createItem, toggleItemFavorite } = await import("./items");
+const { updateItem, deleteItem, createItem, toggleItemFavorite, toggleItemPin } = await import(
+  "./items"
+);
 
 describe("updateItem action", () => {
   beforeEach(() => {
@@ -186,6 +190,42 @@ describe("toggleItemFavorite action", () => {
     const result = await toggleItemFavorite("item-1");
 
     expect(mockToggleItemFavoriteInDb).toHaveBeenCalledWith("user-1", "item-1");
+    expect(result).toEqual({ success: true, data: updated });
+  });
+});
+
+describe("toggleItemPin action", () => {
+  beforeEach(() => {
+    mockAuth.mockReset();
+    mockToggleItemPinInDb.mockReset();
+  });
+
+  it("returns Unauthorized when there is no session", async () => {
+    mockAuth.mockResolvedValueOnce(null);
+
+    const result = await toggleItemPin("item-1");
+
+    expect(result).toEqual({ success: false, error: "Unauthorized" });
+    expect(mockToggleItemPinInDb).not.toHaveBeenCalled();
+  });
+
+  it("returns an error when the item isn't found or owned by another user", async () => {
+    mockAuth.mockResolvedValueOnce({ user: { id: "user-1" } });
+    mockToggleItemPinInDb.mockResolvedValueOnce(null);
+
+    const result = await toggleItemPin("item-404");
+
+    expect(result).toEqual({ success: false, error: "Item not found" });
+  });
+
+  it("validates ownership via session and toggles the pinned state", async () => {
+    mockAuth.mockResolvedValueOnce({ user: { id: "user-1" } });
+    const updated = { id: "item-1", isPinned: true };
+    mockToggleItemPinInDb.mockResolvedValueOnce(updated);
+
+    const result = await toggleItemPin("item-1");
+
+    expect(mockToggleItemPinInDb).toHaveBeenCalledWith("user-1", "item-1");
     expect(result).toEqual({ success: true, data: updated });
   });
 });
