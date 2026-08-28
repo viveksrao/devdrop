@@ -21,7 +21,8 @@ interface CollectionCardProps {
 
 export function CollectionCard({ collection }: CollectionCardProps) {
   const router = useRouter();
-  const { dialogs, openEdit, openDelete } = useCollectionActions(collection);
+  const { dialogs, openEdit, openDelete, toggleFavorite, isTogglingFavorite } =
+    useCollectionActions(collection);
 
   return (
     <>
@@ -64,7 +65,9 @@ export function CollectionCard({ collection }: CollectionCardProps) {
                 onClick={(e: React.MouseEvent) => e.stopPropagation()}
               >
                 <DropdownMenuItem onClick={openEdit}>Edit</DropdownMenuItem>
-                <DropdownMenuItem>Favorite</DropdownMenuItem>
+                <DropdownMenuItem onClick={toggleFavorite} disabled={isTogglingFavorite}>
+                  {collection.isFavorite ? "Unfavorite" : "Favorite"}
+                </DropdownMenuItem>
                 <DropdownMenuItem variant="destructive" onClick={openDelete}>
                   Delete
                 </DropdownMenuItem>

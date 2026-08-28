@@ -6,6 +6,7 @@ import {
   getItemDetail,
   getItemsByType,
   getItemStats,
+  toggleItemFavorite,
   updateItem,
 } from "./items";
 
@@ -460,6 +461,68 @@ describe("createItem", () => {
           fileSize: 1024,
         }),
       })
+    );
+  });
+});
+
+describe("toggleItemFavorite", () => {
+  const toggledItem = {
+    id: "item-1",
+    title: "useAuth hook",
+    description: null,
+    contentType: "TEXT" as const,
+    content: null,
+    fileUrl: null,
+    fileName: null,
+    fileSize: null,
+    url: null,
+    language: null,
+    isFavorite: true,
+    isPinned: false,
+    createdAt: new Date("2026-01-01T00:00:00Z"),
+    updatedAt: new Date("2026-01-03T00:00:00Z"),
+    itemType: { id: "type-1", name: "snippet", icon: "Code", color: "#3b82f6" },
+    tags: [],
+    collections: [],
+  };
+
+  it("returns null when the item doesn't exist or belongs to another user", async () => {
+    prismaMock.item.findFirst.mockResolvedValueOnce(null);
+
+    const result = await toggleItemFavorite("user-1", "item-404");
+
+    expect(result).toBeNull();
+    expect(prismaMock.item.update).not.toHaveBeenCalled();
+  });
+
+  it("flips isFavorite from false to true", async () => {
+    prismaMock.item.findFirst.mockResolvedValueOnce({
+      id: "item-1",
+      isFavorite: false,
+    } as never);
+    prismaMock.item.update.mockResolvedValueOnce(toggledItem);
+
+    const result = await toggleItemFavorite("user-1", "item-1");
+
+    expect(prismaMock.item.update).toHaveBeenCalledWith({
+      where: { id: "item-1" },
+      data: { isFavorite: true },
+      include: { itemType: true, tags: true, collections: { include: { collection: true } } },
+    });
+    expect(result?.isFavorite).toBe(true);
+  });
+
+  it("flips isFavorite from true to false", async () => {
+    prismaMock.item.findFirst.mockResolvedValueOnce({
+      id: "item-1",
+      isFavorite: true,
+    } as never);
+    prismaMock.item.update.mockResolvedValueOnce({ ...toggledItem, isFavorite: false });
+
+    await toggleItemFavorite("user-1", "item-1");
+
+    expect(prismaMock.item.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { isFavorite: false } })
     );
   });
 });

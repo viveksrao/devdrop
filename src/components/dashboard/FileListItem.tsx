@@ -1,10 +1,14 @@
 "use client";
 
-import { Download, File, FileCode, FileJson, FileSpreadsheet, FileText } from "lucide-react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Download, File, FileCode, FileJson, FileSpreadsheet, FileText, Star } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useItemDrawer } from "@/components/dashboard/ItemDrawerProvider";
 import { formatFileSize, getFileIconName } from "@/lib/constants/file-upload";
+import { toggleItemFavorite } from "@/actions/items";
 import type { ItemWithType } from "@/lib/db/items";
 
 interface FileListItemProps {
@@ -21,7 +25,24 @@ const FILE_ICON_COMPONENTS: Record<string, LucideIcon> = {
 
 export function FileListItem({ item }: FileListItemProps) {
   const { openItem } = useItemDrawer();
+  const router = useRouter();
+  const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
   const Icon = FILE_ICON_COMPONENTS[getFileIconName(item.fileName ?? item.title)];
+
+  async function handleToggleFavorite(e: React.MouseEvent) {
+    e.stopPropagation();
+    if (isTogglingFavorite) return;
+    setIsTogglingFavorite(true);
+    const result = await toggleItemFavorite(item.id);
+    setIsTogglingFavorite(false);
+
+    if (!result.success) {
+      toast.error(result.error ?? "Failed to update favorite");
+      return;
+    }
+
+    router.refresh();
+  }
 
   return (
     <div
@@ -45,6 +66,21 @@ export function FileListItem({ item }: FileListItemProps) {
           {item.fileSize !== null && <span>{formatFileSize(item.fileSize)}</span>}
           <span>{item.createdAt.toLocaleDateString()}</span>
         </div>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-xs"
+          className={
+            item.isFavorite
+              ? "text-yellow-500 hover:text-yellow-500"
+              : "text-muted-foreground hover:text-foreground"
+          }
+          onClick={handleToggleFavorite}
+          disabled={isTogglingFavorite}
+          aria-label={item.isFavorite ? "Unfavorite" : "Favorite"}
+        >
+          <Star className={item.isFavorite ? "fill-yellow-500" : undefined} />
+        </Button>
         <Button
           variant="outline"
           size="sm"

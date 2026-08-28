@@ -1,13 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Copy, Pin } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Check, Copy, Pin, Star } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ITEM_TYPE_ICONS, ITEM_TYPE_LABELS } from "@/lib/constants/item-types";
 import { useItemDrawer } from "@/components/dashboard/ItemDrawerProvider";
+import { toggleItemFavorite } from "@/actions/items";
 import type { ItemDetail, ItemWithType } from "@/lib/db/items";
 
 interface ItemCardProps {
@@ -19,8 +21,25 @@ export function ItemCard({ item }: ItemCardProps) {
   const Icon = ITEM_TYPE_ICONS[itemType.name];
   const label = ITEM_TYPE_LABELS[itemType.name] ?? itemType.name;
   const { openItem } = useItemDrawer();
+  const router = useRouter();
   const [copied, setCopied] = useState(false);
   const [copying, setCopying] = useState(false);
+  const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
+
+  async function handleToggleFavorite(e: React.MouseEvent) {
+    e.stopPropagation();
+    if (isTogglingFavorite) return;
+    setIsTogglingFavorite(true);
+    const result = await toggleItemFavorite(item.id);
+    setIsTogglingFavorite(false);
+
+    if (!result.success) {
+      toast.error(result.error ?? "Failed to update favorite");
+      return;
+    }
+
+    router.refresh();
+  }
 
   async function handleCopy(e: React.MouseEvent) {
     e.stopPropagation();
@@ -76,6 +95,21 @@ export function ItemCard({ item }: ItemCardProps) {
             {item.isPinned && (
               <Pin className="size-3.5 text-muted-foreground" />
             )}
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-xs"
+              className={
+                item.isFavorite
+                  ? "text-yellow-500 hover:text-yellow-500"
+                  : "text-muted-foreground hover:text-foreground"
+              }
+              onClick={handleToggleFavorite}
+              disabled={isTogglingFavorite}
+              aria-label={item.isFavorite ? "Unfavorite" : "Favorite"}
+            >
+              <Star className={item.isFavorite ? "fill-yellow-500" : undefined} />
+            </Button>
             <Button
               type="button"
               variant="ghost"

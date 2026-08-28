@@ -4,15 +4,18 @@ const mockAuth = vi.fn();
 const mockCreateCollectionInDb = vi.fn();
 const mockUpdateCollectionInDb = vi.fn();
 const mockDeleteCollectionInDb = vi.fn();
+const mockToggleCollectionFavoriteInDb = vi.fn();
 
 vi.mock("@/auth", () => ({ auth: mockAuth }));
 vi.mock("@/lib/db/collections", () => ({
   createCollection: mockCreateCollectionInDb,
   updateCollection: mockUpdateCollectionInDb,
   deleteCollection: mockDeleteCollectionInDb,
+  toggleCollectionFavorite: mockToggleCollectionFavoriteInDb,
 }));
 
-const { createCollection, updateCollection, deleteCollection } = await import("./collections");
+const { createCollection, updateCollection, deleteCollection, toggleCollectionFavorite } =
+  await import("./collections");
 
 describe("createCollection action", () => {
   beforeEach(() => {
@@ -153,5 +156,41 @@ describe("deleteCollection action", () => {
 
     expect(mockDeleteCollectionInDb).toHaveBeenCalledWith("user-1", "collection-1");
     expect(result).toEqual({ success: true });
+  });
+});
+
+describe("toggleCollectionFavorite action", () => {
+  beforeEach(() => {
+    mockAuth.mockReset();
+    mockToggleCollectionFavoriteInDb.mockReset();
+  });
+
+  it("returns Unauthorized when there is no session", async () => {
+    mockAuth.mockResolvedValueOnce(null);
+
+    const result = await toggleCollectionFavorite("collection-1");
+
+    expect(result).toEqual({ success: false, error: "Unauthorized" });
+    expect(mockToggleCollectionFavoriteInDb).not.toHaveBeenCalled();
+  });
+
+  it("returns an error when the collection is not found", async () => {
+    mockAuth.mockResolvedValueOnce({ user: { id: "user-1" } });
+    mockToggleCollectionFavoriteInDb.mockResolvedValueOnce(null);
+
+    const result = await toggleCollectionFavorite("collection-1");
+
+    expect(result).toEqual({ success: false, error: "Collection not found" });
+  });
+
+  it("validates session and toggles the favorite state", async () => {
+    mockAuth.mockResolvedValueOnce({ user: { id: "user-1" } });
+    const updated = { id: "collection-1", isFavorite: true };
+    mockToggleCollectionFavoriteInDb.mockResolvedValueOnce(updated);
+
+    const result = await toggleCollectionFavorite("collection-1");
+
+    expect(mockToggleCollectionFavoriteInDb).toHaveBeenCalledWith("user-1", "collection-1");
+    expect(result).toEqual({ success: true, data: updated });
   });
 });

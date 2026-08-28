@@ -6,6 +6,7 @@ import {
   createCollection as createCollectionInDb,
   updateCollection as updateCollectionInDb,
   deleteCollection as deleteCollectionInDb,
+  toggleCollectionFavorite as toggleCollectionFavoriteInDb,
 } from "@/lib/db/collections";
 import type { CollectionWithStats } from "@/lib/db/collections";
 
@@ -86,6 +87,28 @@ export async function updateCollection(
     return { success: true, data: updated };
   } catch (error) {
     console.error("Failed to update collection:", error);
+    return { success: false, error: "Something went wrong" };
+  }
+}
+
+export async function toggleCollectionFavorite(
+  collectionId: string
+): Promise<ActionResult<CollectionWithStats>> {
+  const session = await auth();
+  if (!session?.user) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  try {
+    const updated = await toggleCollectionFavoriteInDb(session.user.id, collectionId);
+
+    if (!updated) {
+      return { success: false, error: "Collection not found" };
+    }
+
+    return { success: true, data: updated };
+  } catch (error) {
+    console.error("Failed to toggle collection favorite:", error);
     return { success: false, error: "Something went wrong" };
   }
 }

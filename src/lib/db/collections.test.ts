@@ -6,6 +6,7 @@ import {
   getCollectionDetail,
   updateCollection,
   deleteCollection,
+  toggleCollectionFavorite,
 } from "./collections";
 
 describe("createCollection", () => {
@@ -204,6 +205,50 @@ describe("updateCollection", () => {
       types: [],
       dominantColor: null,
     });
+  });
+});
+
+describe("toggleCollectionFavorite", () => {
+  it("returns null when the collection is not found or not owned by the user", async () => {
+    prismaMock.collection.findFirst.mockResolvedValueOnce(null);
+
+    const result = await toggleCollectionFavorite("user-1", "collection-1");
+
+    expect(prismaMock.collection.findFirst).toHaveBeenCalledWith({
+      where: { id: "collection-1", userId: "user-1" },
+    });
+    expect(prismaMock.collection.update).not.toHaveBeenCalled();
+    expect(result).toBeNull();
+  });
+
+  it("flips isFavorite from false to true", async () => {
+    prismaMock.collection.findFirst.mockResolvedValueOnce({
+      id: "collection-1",
+      name: "React Patterns",
+      description: null,
+      isFavorite: false,
+      userId: "user-1",
+      defaultTypeId: null,
+      createdAt: new Date("2026-01-01T00:00:00Z"),
+      updatedAt: new Date("2026-01-01T00:00:00Z"),
+    });
+    prismaMock.collection.update.mockResolvedValueOnce({
+      id: "collection-1",
+      name: "React Patterns",
+      description: null,
+      isFavorite: true,
+      updatedAt: new Date("2026-01-02T00:00:00Z"),
+      items: [],
+    } as never);
+
+    const result = await toggleCollectionFavorite("user-1", "collection-1");
+
+    expect(prismaMock.collection.update).toHaveBeenCalledWith({
+      where: { id: "collection-1" },
+      data: { isFavorite: true },
+      select: expect.any(Object),
+    });
+    expect(result?.isFavorite).toBe(true);
   });
 });
 

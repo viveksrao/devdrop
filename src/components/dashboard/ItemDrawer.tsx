@@ -28,7 +28,7 @@ import { ItemDetailView } from "@/components/dashboard/ItemDetailView";
 import { ITEM_TYPE_ICONS, ITEM_TYPE_LABELS } from "@/lib/constants/item-types";
 import type { ItemDetail } from "@/lib/db/items";
 import type { CollectionOption } from "@/lib/db/collections";
-import { updateItem, deleteItem } from "@/actions/items";
+import { updateItem, deleteItem, toggleItemFavorite } from "@/actions/items";
 
 function toEditFormState(item: ItemDetail): ItemEditFormState {
   return {
@@ -59,6 +59,7 @@ export function ItemDrawer({ itemId, open, onOpenChange }: ItemDrawerProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [copied, setCopied] = useState(false);
   const [allCollections, setAllCollections] = useState<CollectionOption[]>([]);
+  const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
 
   if (isEditing && editingForItemId !== itemId) {
     setIsEditing(false);
@@ -170,6 +171,22 @@ export function ItemDrawer({ itemId, open, onOpenChange }: ItemDrawerProps) {
     router.refresh();
   }
 
+  async function handleToggleFavorite() {
+    if (!item || isTogglingFavorite) return;
+
+    setIsTogglingFavorite(true);
+    const result = await toggleItemFavorite(item.id);
+    setIsTogglingFavorite(false);
+
+    if (!result.success || !result.data) {
+      toast.error(result.error ?? "Failed to update favorite");
+      return;
+    }
+
+    setItem(result.data);
+    router.refresh();
+  }
+
   async function handleDelete() {
     if (!item) return;
 
@@ -234,6 +251,8 @@ export function ItemDrawer({ itemId, open, onOpenChange }: ItemDrawerProps) {
                   variant="ghost"
                   size="sm"
                   className={item.isFavorite ? "text-yellow-500" : undefined}
+                  disabled={isTogglingFavorite}
+                  onClick={handleToggleFavorite}
                 >
                   <Star className={item.isFavorite ? "fill-yellow-500" : undefined} />
                   Favorite

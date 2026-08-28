@@ -326,6 +326,26 @@ export async function createItem(
   return toItemDetail(item);
 }
 
+export async function toggleItemFavorite(
+  userId: string,
+  itemId: string
+): Promise<ItemDetail | null> {
+  const existing = await prisma.item.findFirst({ where: { id: itemId, userId } });
+  if (!existing) return null;
+
+  const item = await prisma.item.update({
+    where: { id: itemId },
+    data: { isFavorite: !existing.isFavorite },
+    include: {
+      itemType: true,
+      tags: true,
+      collections: { include: { collection: true } },
+    },
+  });
+
+  return toItemDetail(item);
+}
+
 export async function deleteItem(userId: string, itemId: string): Promise<boolean> {
   const existing = await prisma.item.findFirst({ where: { id: itemId, userId } });
   if (!existing) return false;

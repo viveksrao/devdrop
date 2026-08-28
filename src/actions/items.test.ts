@@ -4,15 +4,17 @@ const mockAuth = vi.fn();
 const mockUpdateItemInDb = vi.fn();
 const mockDeleteItemInDb = vi.fn();
 const mockCreateItemInDb = vi.fn();
+const mockToggleItemFavoriteInDb = vi.fn();
 
 vi.mock("@/auth", () => ({ auth: mockAuth }));
 vi.mock("@/lib/db/items", () => ({
   updateItem: mockUpdateItemInDb,
   deleteItem: mockDeleteItemInDb,
   createItem: mockCreateItemInDb,
+  toggleItemFavorite: mockToggleItemFavoriteInDb,
 }));
 
-const { updateItem, deleteItem, createItem } = await import("./items");
+const { updateItem, deleteItem, createItem, toggleItemFavorite } = await import("./items");
 
 describe("updateItem action", () => {
   beforeEach(() => {
@@ -149,6 +151,42 @@ describe("deleteItem action", () => {
 
     expect(mockDeleteItemInDb).toHaveBeenCalledWith("user-1", "item-1");
     expect(result).toEqual({ success: true });
+  });
+});
+
+describe("toggleItemFavorite action", () => {
+  beforeEach(() => {
+    mockAuth.mockReset();
+    mockToggleItemFavoriteInDb.mockReset();
+  });
+
+  it("returns Unauthorized when there is no session", async () => {
+    mockAuth.mockResolvedValueOnce(null);
+
+    const result = await toggleItemFavorite("item-1");
+
+    expect(result).toEqual({ success: false, error: "Unauthorized" });
+    expect(mockToggleItemFavoriteInDb).not.toHaveBeenCalled();
+  });
+
+  it("returns an error when the item isn't found or owned by another user", async () => {
+    mockAuth.mockResolvedValueOnce({ user: { id: "user-1" } });
+    mockToggleItemFavoriteInDb.mockResolvedValueOnce(null);
+
+    const result = await toggleItemFavorite("item-404");
+
+    expect(result).toEqual({ success: false, error: "Item not found" });
+  });
+
+  it("validates ownership via session and toggles the favorite state", async () => {
+    mockAuth.mockResolvedValueOnce({ user: { id: "user-1" } });
+    const updated = { id: "item-1", isFavorite: true };
+    mockToggleItemFavoriteInDb.mockResolvedValueOnce(updated);
+
+    const result = await toggleItemFavorite("item-1");
+
+    expect(mockToggleItemFavoriteInDb).toHaveBeenCalledWith("user-1", "item-1");
+    expect(result).toEqual({ success: true, data: updated });
   });
 });
 

@@ -240,6 +240,24 @@ export async function updateCollection(
   return toCollectionWithStats(collection);
 }
 
+export async function toggleCollectionFavorite(
+  userId: string,
+  collectionId: string
+): Promise<CollectionWithStats | null> {
+  const existing = await prisma.collection.findFirst({
+    where: { id: collectionId, userId },
+  });
+  if (!existing) return null;
+
+  const collection = await prisma.collection.update({
+    where: { id: collectionId },
+    data: { isFavorite: !existing.isFavorite },
+    select: COLLECTION_STATS_SELECT,
+  });
+
+  return toCollectionWithStats(collection);
+}
+
 export async function deleteCollection(userId: string, collectionId: string): Promise<boolean> {
   const existing = await prisma.collection.findFirst({
     where: { id: collectionId, userId },

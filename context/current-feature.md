@@ -1,14 +1,28 @@
-# Current Feature
+# Current Feature: Favorite Toggle (Drawer, Collection Page, Cards)
 
 ## Status
 
+In Progress
+
 ## Goals
 
-<!-- Bullet points of what success looks like -->
+- Clicking the Favorite button/icon in the Item Drawer's action bar toggles `Item.isFavorite` and persists it
+- Clicking the Favorite menu item in `CollectionCard`'s dropdown toggles `Collection.isFavorite` and persists it
+- Clicking the Favorite icon button in `CollectionDetailHeader` (`/collections/[id]`) toggles `Collection.isFavorite` and persists it
+- Add a favorite toggle affordance to `ItemCard` (and `ImageCard`/`FileListItem` if in scope) so items can be favorited directly from card grids, not just the drawer
+- All favorite toggles reflect immediately in the UI (optimistic or refreshed) and stay in sync with existing surfaces that already read `isFavorite` (sidebar star styling, `/favorites` page, dashboard stats)
 
 ## Notes
 
-<!-- Additional context, constraints, or details from spec -->
+- `isFavorite` already exists on both `Item` and `Collection` in the schema — no migration needed
+- These toggle points are currently inert placeholders:
+  - `ItemDrawer.tsx` action bar Favorite button (~line 236-239)
+  - `CollectionCard.tsx` dropdown "Favorite" menu item (~line 67)
+  - `CollectionDetailHeader.tsx` Favorite icon button (~line 33-34)
+- Need new server actions: `toggleItemFavorite`/`updateItem` extension in `src/actions/items.ts`, and equivalent in `src/actions/collections.ts` — follow the existing `{ success, data, error }` pattern and ownership-scoped `findFirst` before mutating (mirrors `updateItem`/`updateCollection`)
+- `/favorites` page (`getFavoriteItems`/`getFavoriteCollections`) and dashboard stats (`getItemStats`/`getCollectionStats`) already query `isFavorite: true` — toggling should make items/collections appear/disappear there via `router.refresh()`, same mechanism used by existing mutations
+- Decide during implementation: does clicking favorite on a card require opening the drawer first, or is it a direct icon on the card itself (pin indicator precedent already exists on `ItemCard`)? Lean toward a direct icon to match "toggle from cards" in the request
+- Out of scope unless requested: bulk favorite/unfavorite, favorite-only filter UI beyond the existing `/favorites` page
 
 ## History
 

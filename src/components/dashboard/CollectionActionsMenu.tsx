@@ -14,12 +14,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { EditCollectionDialog } from "@/components/dashboard/EditCollectionDialog";
-import { deleteCollection } from "@/actions/collections";
+import { deleteCollection, toggleCollectionFavorite } from "@/actions/collections";
 
 export interface CollectionActionsTarget {
   id: string;
   name: string;
   description: string | null;
+  isFavorite: boolean;
 }
 
 export function useCollectionActions(collection: CollectionActionsTarget) {
@@ -27,6 +28,7 @@ export function useCollectionActions(collection: CollectionActionsTarget) {
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
 
   async function handleDelete() {
     setIsDeleting(true);
@@ -41,6 +43,21 @@ export function useCollectionActions(collection: CollectionActionsTarget) {
     toast.success("Collection deleted");
     setDeleteOpen(false);
     router.push("/collections");
+    router.refresh();
+  }
+
+  async function handleToggleFavorite() {
+    if (isTogglingFavorite) return;
+
+    setIsTogglingFavorite(true);
+    const result = await toggleCollectionFavorite(collection.id);
+    setIsTogglingFavorite(false);
+
+    if (!result.success) {
+      toast.error(result.error ?? "Failed to update favorite");
+      return;
+    }
+
     router.refresh();
   }
 
@@ -71,5 +88,7 @@ export function useCollectionActions(collection: CollectionActionsTarget) {
     dialogs,
     openEdit: () => setEditOpen(true),
     openDelete: () => setDeleteOpen(true),
+    toggleFavorite: handleToggleFavorite,
+    isTogglingFavorite,
   };
 }

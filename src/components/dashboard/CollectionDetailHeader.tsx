@@ -10,7 +10,8 @@ interface CollectionDetailHeaderProps {
 }
 
 export function CollectionDetailHeader({ collection, itemCount }: CollectionDetailHeaderProps) {
-  const { dialogs, openEdit, openDelete } = useCollectionActions(collection);
+  const { dialogs, openEdit, openDelete, toggleFavorite, isTogglingFavorite } =
+    useCollectionActions(collection);
 
   return (
     <div className="flex items-start justify-between gap-4">
@@ -30,7 +31,13 @@ export function CollectionDetailHeader({ collection, itemCount }: CollectionDeta
       </div>
 
       <div className="flex shrink-0 items-center gap-1">
-        <Button variant="ghost" size="icon" aria-label="Favorite collection">
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label="Favorite collection"
+          disabled={isTogglingFavorite}
+          onClick={toggleFavorite}
+        >
           <Star className={collection.isFavorite ? "fill-yellow-500 text-yellow-500" : undefined} />
         </Button>
         <Button variant="ghost" size="icon" aria-label="Edit collection" onClick={openEdit}>
