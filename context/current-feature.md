@@ -1,12 +1,17 @@
-# Current Feature
+# Current Feature: Remove Gear Icon from Dashboard Navbar
 
 ## Status
 
+Implemented — pending final review/commit
+
 ## Goals
 
-<!-- Bullet points of what success looks like -->
+- Remove the inert gear/Settings icon button from `src/components/layout/DashboardTopBar.tsx`
+- Remove the now-unused `Settings` import from that file if nothing else in it uses it
 
 ## Notes
+
+The top bar's gear button (lines ~63-65) has no `href`/`onClick` — it's currently dead UI. Settings remains reachable via the sidebar user dropdown (`src/components/layout/SidebarUserFooter.tsx`, linking to `/settings`), so no other navigation path is affected. No schema/server-action/route changes needed; no unit tests apply (presentation-only change).
 
 <!-- Additional context, constraints, or details from spec -->
 

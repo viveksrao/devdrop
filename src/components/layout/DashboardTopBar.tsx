@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FolderPlus, Plus, Search, Settings, Star } from "lucide-react";
+import { FolderPlus, Plus, Search, Star } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { UserAvatar } from "@/components/shared/UserAvatar";
@@ -60,9 +60,6 @@ export function DashboardTopBar({
         >
           <Star />
         </Link>
-        <Button variant="ghost" size="icon" aria-label="Settings">
-          <Settings />
-        </Button>
         <UserAvatar name={user.name} email={user.email} image={user.image} />
       </div>
     </header>
