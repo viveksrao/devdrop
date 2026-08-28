@@ -46,6 +46,27 @@
     --radius-2xl: calc(var(--radius) * 1.8);
     --radius-3xl: calc(var(--radius) * 2.2);
     --radius-4xl: calc(var(--radius) * 2.6);
+
+    --color-marketing-bg: #0a0a0f;
+    --color-marketing-bg-elevated: #111117;
+    --color-marketing-bg-card: #15151d;
+    --color-marketing-border: rgba(255, 255, 255, 0.08);
+    --color-marketing-border-strong: rgba(255, 255, 255, 0.14);
+    --color-marketing-text-muted: #9a9aa8;
+    --color-marketing-text-dim: #6b6b78;
+
+    --animate-arrow-pulse: arrow-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes arrow-pulse {
+    0%, 100% {
+        opacity: 0.55;
+        transform: translateX(0);
+    }
+    50% {
+        opacity: 1;
+        transform: translateX(6px);
+    }
 }
 
 :root {

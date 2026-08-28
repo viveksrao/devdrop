@@ -1,14 +1,23 @@
-# Current Feature
+# Current Feature: Homepage
 
 ## Status
 
+Implemented — pending final review/commit
+
 ## Goals
 
-<!-- Bullet points of what success looks like -->
+- Replace the placeholder `src/app/page.tsx` with the real marketing homepage, ported from `prototypes/homepage/` (`index.html`/`styles.css`/`script.js`) into React/Tailwind/shadcn components
+- Build all sections: Navbar, Hero (with animated chaos→order visual), Features, AI Section, Pricing, CTA, Footer
+- Split into server vs. client components per `context/coding-standards.md` — client only where interactivity is needed (navbar scroll state, chaos-icon animation, pricing toggle, scroll fade-in)
+- Style with Tailwind CSS v4 + shadcn/ui, matching the rest of the app's conventions (no new CSS file, reuse `ITEM_TYPE_COLORS`/`ITEM_TYPE_ICONS`, extend `@theme` in `globals.css` only for values not already covered)
+- Every button/link resolves to a real route (`/sign-in`, `/register`, in-page anchors) instead of the mockup's `href="#"` placeholders
+- Keep code clean and DRY — e.g. one shared `ScrollFadeIn` component instead of duplicating fade-in logic per section
 
 ## Notes
 
-<!-- Additional context, constraints, or details from spec -->
+Full breakdown (component table, styling rules, animation notes, and the complete link/route mapping table) is in @context/features/homepage-spec.md — treat that as the source of truth during implementation.
+
+Out of scope: Stripe checkout wiring, auth-aware homepage redirect for signed-in users, blog/changelog/about/contact/privacy/terms pages (footer links to these go to `/` as placeholders). No schema or server-action changes; no unit tests apply (fully static page).
 
 ## History
 
