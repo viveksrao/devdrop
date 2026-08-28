@@ -1,14 +1,27 @@
-# Current Feature
+# Current Feature: Client-Side Sorting on Favorites Page
 
 ## Status
 
+In Progress
+
 ## Goals
 
-<!-- Bullet points of what success looks like -->
+- The Items section on `/favorites` can be sorted by Name, Date (favorited/updated), and Item Type
+- The Collections section on `/favorites` can be sorted by Name and Date (favorited/updated) — Item Type doesn't apply to collections (mixed types), so it's item-only
+- Sorting happens entirely client-side, no new server round-trip or query params
+- Default sort on load matches current behavior (most-recently-favorited first, i.e. `updatedAt desc`)
+- Sort control(s) are easy to discover near each section's heading
 
 ## Notes
 
-<!-- Additional context, constraints, or details from spec -->
+- `/favorites` (`src/app/favorites/page.tsx`) is currently a server component rendering two sections — Items (`FavoriteItemRow[]`) and Collections (`FavoriteCollectionRow[]`) — both pre-sorted server-side by `updatedAt desc` via `getFavoriteItems`/`getFavoriteCollections` (`src/lib/db/items.ts`/`src/lib/db/collections.ts`)
+- To add client-side sorting, the two list sections need to become client components (or be wrapped in one) holding sort state and re-deriving a sorted array from the server-fetched data — the page itself can stay a server component fetching the same data as today and passing it down
+- Available fields to sort by:
+  - Items (`ItemWithType`): `title` (Name), `updatedAt` (Date), `itemType.name`/label (Item Type)
+  - Collections (`CollectionWithStats`): `name` (Name), `updatedAt` (Date) — no single type field
+- Follow existing UI conventions: shadcn `Select` (already used in `EditorPreferencesForm`) is a reasonable fit for a sort dropdown, styled to match the compact monospace terminal-style rows already on this page
+- No schema, server-action, or query changes expected — this is presentation-layer only
+- Out of scope unless requested: persisting sort choice (e.g. to localStorage or user prefs), ascending/descending toggle beyond a sensible default per field, sorting other pages (`/items/[type]`, `/collections`)
 
 ## History
 

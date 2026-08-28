@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { DashboardShell } from "@/components/layout/DashboardShell";
-import { FavoriteItemRow } from "@/components/dashboard/FavoriteItemRow";
-import { FavoriteCollectionRow } from "@/components/dashboard/FavoriteCollectionRow";
+import { FavoriteItemsSection } from "@/components/dashboard/FavoriteItemsSection";
+import { FavoriteCollectionsSection } from "@/components/dashboard/FavoriteCollectionsSection";
 import { getFavoriteItems, getSystemItemTypes } from "@/lib/db/items";
 import { getFavoriteCollections, getRecentCollections, getAllCollections } from "@/lib/db/collections";
 import { prisma } from "@/lib/prisma";
@@ -53,37 +53,8 @@ export default async function FavoritesPage() {
           </p>
         ) : (
           <div className="flex flex-col gap-6">
-            <section>
-              <h2 className="px-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                Items ({favoriteItems.length})
-              </h2>
-              {favoriteItems.length === 0 ? (
-                <p className="px-2 py-1.5 text-sm text-muted-foreground">No favorited items.</p>
-              ) : (
-                <div className="mt-1 flex flex-col divide-y divide-border">
-                  {favoriteItems.map((item) => (
-                    <FavoriteItemRow key={item.id} item={item} />
-                  ))}
-                </div>
-              )}
-            </section>
-
-            <section>
-              <h2 className="px-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                Collections ({favoriteCollections.length})
-              </h2>
-              {favoriteCollections.length === 0 ? (
-                <p className="px-2 py-1.5 text-sm text-muted-foreground">
-                  No favorited collections.
-                </p>
-              ) : (
-                <div className="mt-1 flex flex-col divide-y divide-border">
-                  {favoriteCollections.map((collection) => (
-                    <FavoriteCollectionRow key={collection.id} collection={collection} />
-                  ))}
-                </div>
-              )}
-            </section>
+            <FavoriteItemsSection items={favoriteItems} />
+            <FavoriteCollectionsSection collections={favoriteCollections} />
           </div>
         )}
       </div>
