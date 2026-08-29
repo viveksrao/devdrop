@@ -220,6 +220,7 @@ function SidebarLink({
   const link = (
     <Link
       href={href}
+      aria-label={collapsed ? label : undefined}
       className={cn(
         "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-foreground/90 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
         collapsed && "justify-center px-0"

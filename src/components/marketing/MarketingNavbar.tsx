@@ -2,11 +2,14 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { buttonVariants } from "@/components/ui/button";
+import { Menu } from "lucide-react";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Sheet, SheetClose, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
 export function MarketingNavbar() {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setIsScrolled(window.scrollY > 12);
@@ -37,7 +40,7 @@ export function MarketingNavbar() {
           </a>
         </nav>
 
-        <div className="flex items-center gap-3">
+        <div className="hidden items-center gap-3 sm:flex">
           <Link href="/sign-in" className={buttonVariants({ variant: "ghost" })}>
             Sign In
           </Link>
@@ -51,7 +54,63 @@ export function MarketingNavbar() {
             Get Started
           </Link>
         </div>
+
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label="Open menu"
+          className="sm:hidden"
+          onClick={() => setMobileOpen(true)}
+        >
+          <Menu />
+        </Button>
       </div>
+
+      <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+        <SheetContent side="right" className="w-72 border-marketing-border bg-marketing-bg sm:hidden">
+          <SheetTitle className="sr-only">Menu</SheetTitle>
+          <nav className="mt-8 flex flex-col gap-1 px-6 text-marketing-text-muted">
+            <SheetClose
+              nativeButton={false}
+              render={
+                <a href="#features" className="rounded-md px-2 py-3 text-base hover:text-white" />
+              }
+            >
+              Features
+            </SheetClose>
+            <SheetClose
+              nativeButton={false}
+              render={
+                <a href="#pricing" className="rounded-md px-2 py-3 text-base hover:text-white" />
+              }
+            >
+              Pricing
+            </SheetClose>
+          </nav>
+          <div className="mt-4 flex flex-col gap-3 px-6">
+            <SheetClose
+              nativeButton={false}
+              render={<Link href="/sign-in" className={buttonVariants({ variant: "ghost" })} />}
+            >
+              Sign In
+            </SheetClose>
+            <SheetClose
+              nativeButton={false}
+              render={
+                <Link
+                  href="/register"
+                  className={cn(
+                    buttonVariants({ variant: "default" }),
+                    "bg-gradient-to-br from-blue-500 to-indigo-500 text-white shadow-[0_4px_20px_rgba(59,130,246,0.35)] hover:from-blue-500 hover:to-indigo-500 hover:opacity-90"
+                  )}
+                />
+              }
+            >
+              Get Started
+            </SheetClose>
+          </div>
+        </SheetContent>
+      </Sheet>
     </header>
   );
 }

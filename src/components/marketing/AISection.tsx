@@ -51,8 +51,9 @@ export function AISection() {
               <span className="h-3 w-3 rounded-full bg-[#27c93f]" />
               <span className="ml-2 text-[0.78rem] text-marketing-text-dim">useDebounce.ts</span>
             </div>
-            <div className="overflow-x-auto px-5 py-4.5 font-mono text-[0.8rem] leading-[1.7]">
-              <pre>
+            <div className="relative">
+              <div className="overflow-x-auto px-5 py-4.5 font-mono text-[0.8rem] leading-[1.7]">
+                <pre>
                 <code>
                   <span className="text-pink-400">export function</span>{" "}
                   <span className="text-blue-400">useDebounce</span>
@@ -107,7 +108,12 @@ export function AISection() {
                   {"\n"}
                   <span className="text-marketing-text-muted">{"}"}</span>
                 </code>
-              </pre>
+                </pre>
+              </div>
+              <div
+                className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-marketing-bg-card to-transparent"
+                aria-hidden="true"
+              />
             </div>
             <div className="border-t border-marketing-border bg-violet-500/[0.06] px-5 py-4">
               <span className="mb-2.5 block text-[0.78rem] font-semibold text-violet-300">✨ AI Generated Tags</span>
