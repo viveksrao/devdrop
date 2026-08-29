@@ -2,12 +2,17 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Menu } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Sheet, SheetClose, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
 export function MarketingNavbar() {
+  const pathname = usePathname();
+  const isHome = pathname === "/";
+  const featuresHref = isHome ? "#features" : "/#features";
+  const pricingHref = isHome ? "#pricing" : "/#pricing";
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -32,10 +37,10 @@ export function MarketingNavbar() {
         </Link>
 
         <nav className="hidden items-center gap-8 text-sm text-marketing-text-muted sm:flex">
-          <a href="#features" className="hover:text-white">
+          <a href={featuresHref} className="hover:text-white">
             Features
           </a>
-          <a href="#pricing" className="hover:text-white">
+          <a href={pricingHref} className="hover:text-white">
             Pricing
           </a>
         </nav>
@@ -73,7 +78,7 @@ export function MarketingNavbar() {
             <SheetClose
               nativeButton={false}
               render={
-                <a href="#features" className="rounded-md px-2 py-3 text-base hover:text-white" />
+                <a href={featuresHref} className="rounded-md px-2 py-3 text-base hover:text-white" />
               }
             >
               Features
@@ -81,7 +86,7 @@ export function MarketingNavbar() {
             <SheetClose
               nativeButton={false}
               render={
-                <a href="#pricing" className="rounded-md px-2 py-3 text-base hover:text-white" />
+                <a href={pricingHref} className="rounded-md px-2 py-3 text-base hover:text-white" />
               }
             >
               Pricing

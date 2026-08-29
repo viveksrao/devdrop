@@ -1,16 +1,22 @@
-# Current Feature
+# Current Feature: Add Marketing Navbar to Sign In / Sign Up Pages
 
 ## Status
 
+In Progress
+
 ## Goals
 
-<!-- Bullet points of what success looks like -->
+- `/sign-in` and `/register` render the same top nav used on the homepage (`MarketingNavbar`) instead of no nav at all.
+- Logo in the navbar still links back to `/`.
+- Nav's own "Sign In" / "Get Started" links continue to work sensibly on these pages (e.g. still fine to show, even while already on `/sign-in`).
 
 ## Notes
 
-<!-- Additional context, constraints, or details from spec -->
-
-<!-- Additional context, constraints, or details from spec -->
+- `MarketingNavbar` (`src/components/marketing/MarketingNavbar.tsx`) is a `fixed` header (`h-[68px]`) with scroll-driven background opacity, `Features`/`Pricing` anchor links (`#features`/`#pricing` — these only exist on `/`), Sign In / Get Started buttons, and a mobile hamburger menu (shadcn `Sheet`). It currently assumes the marketing dark theme (`bg-marketing-bg`, `text-white`, `marketing-border` tokens defined in `globals.css`).
+- `/sign-in` (`src/app/sign-in/page.tsx`) and `/register` (`src/app/register/page.tsx`) are currently standalone centered layouts with no header — just a card centered in `min-h-screen`, using standard `bg-background`/`text-foreground` tokens (theme-aware, not the marketing dark theme).
+- Since `#features`/`#pricing` don't exist on these pages, decide whether to keep those links (linking back to `/#features`) or omit them — lean toward reusing the navbar as-is including those links pointed at `/#features`/`/#pricing`, unless testing shows that's confusing.
+- Need to account for the navbar being `fixed` and ~68px tall — add top padding/margin to the sign-in/register content wrapper so the card isn't hidden behind it.
+- Scope is limited to these two pages; other standalone auth pages (`/forgot-password`, `/reset-password`, `/profile`, `/settings`) are out of scope unless the user asks to extend later.
 
 ## History
 
