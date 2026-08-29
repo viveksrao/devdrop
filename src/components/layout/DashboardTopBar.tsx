@@ -29,14 +29,14 @@ export function DashboardTopBar({
   const { open } = useGlobalSearch();
 
   return (
-    <header className="flex h-16 items-center justify-between gap-4 border-b border-border px-6">
-      <div className="flex flex-1 items-center gap-4">
+    <header className="flex h-16 items-center justify-between gap-2 border-b border-border px-4 sm:gap-4 sm:px-6">
+      <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-4">
         {sidebarTrigger}
-        <div className="relative w-full max-w-md">
+        <div className="relative min-w-0 flex-1 sm:max-w-md">
           <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="text"
-            placeholder="Search snippets, prompts, tags... (⌘K)"
+            placeholder="Search... (⌘K)"
             className="cursor-pointer pl-9"
             readOnly
             onClick={open}
@@ -44,12 +44,33 @@ export function DashboardTopBar({
           />
         </div>
       </div>
-      <div className="flex items-center gap-2">
-        <Button variant="secondary" onClick={onNewCollection}>
+      <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+        <Button
+          variant="secondary"
+          size="icon"
+          onClick={onNewCollection}
+          className="sm:hidden"
+          aria-label="New Collection"
+        >
+          <FolderPlus />
+        </Button>
+        <Button
+          variant="secondary"
+          onClick={onNewCollection}
+          className="hidden sm:inline-flex"
+        >
           <FolderPlus />
           New Collection
         </Button>
-        <Button onClick={onNewItem}>
+        <Button
+          size="icon"
+          onClick={onNewItem}
+          className="sm:hidden"
+          aria-label="New Item"
+        >
+          <Plus />
+        </Button>
+        <Button onClick={onNewItem} className="hidden sm:inline-flex">
           <Plus />
           New Item
         </Button>
