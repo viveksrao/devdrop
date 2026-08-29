@@ -21,6 +21,7 @@ const RATE_LIMIT_CONFIGS = {
   "forgot-password": { limit: 3, window: "1 h" },
   "reset-password": { limit: 5, window: "15 m" },
   "resend-verification": { limit: 3, window: "15 m" },
+  checkout: { limit: 10, window: "1 h" },
 } as const;
 
 export type RateLimitName = keyof typeof RATE_LIMIT_CONFIGS;

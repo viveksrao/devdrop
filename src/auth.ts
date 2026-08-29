@@ -31,12 +31,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (!isProtected) return true;
       return !!auth;
     },
-    jwt: ({ token, user }) => {
+    jwt: async ({ token, user }) => {
       if (user) token.id = user.id;
+
+      if (token.id) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: { isPro: true },
+        });
+        token.isPro = dbUser?.isPro ?? false;
+      }
+
       return token;
     },
     session: ({ session, token }) => {
       if (token.id) session.user.id = token.id as string;
+      session.user.isPro = Boolean(token.isPro);
       return session;
     },
   },
