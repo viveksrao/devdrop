@@ -1,16 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { FolderPlus, Plus, Search, Star } from "lucide-react";
+import { FolderPlus, Plus, Search, Sparkles, Star } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { useGlobalSearch } from "@/components/dashboard/GlobalSearchProvider";
+import { cn } from "@/lib/utils";
 
 interface DashboardTopBarUser {
   name?: string | null;
   email?: string | null;
   image?: string | null;
+  isPro?: boolean;
 }
 
 interface DashboardTopBarProps {
@@ -45,6 +47,19 @@ export function DashboardTopBar({
         </div>
       </div>
       <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+        {!user.isPro && (
+          <Link
+            href="/upgrade"
+            aria-label="Upgrade"
+            className={cn(
+              buttonVariants({ variant: "ghost", size: "icon" }),
+              "sm:h-8 sm:w-auto sm:gap-1.5 sm:px-2.5"
+            )}
+          >
+            <Sparkles />
+            <span className="hidden sm:inline">Upgrade</span>
+          </Link>
+        )}
         <Button
           variant="secondary"
           size="icon"
