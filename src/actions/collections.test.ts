@@ -5,6 +5,7 @@ const mockCreateCollectionInDb = vi.fn();
 const mockUpdateCollectionInDb = vi.fn();
 const mockDeleteCollectionInDb = vi.fn();
 const mockToggleCollectionFavoriteInDb = vi.fn();
+const mockCanCreateCollection = vi.fn();
 
 vi.mock("@/auth", () => ({ auth: mockAuth }));
 vi.mock("@/lib/db/collections", () => ({
@@ -13,6 +14,7 @@ vi.mock("@/lib/db/collections", () => ({
   deleteCollection: mockDeleteCollectionInDb,
   toggleCollectionFavorite: mockToggleCollectionFavoriteInDb,
 }));
+vi.mock("@/lib/plan-limits", () => ({ canCreateCollection: mockCanCreateCollection }));
 
 const { createCollection, updateCollection, deleteCollection, toggleCollectionFavorite } =
   await import("./collections");
@@ -23,6 +25,8 @@ describe("createCollection action", () => {
     mockCreateCollectionInDb.mockReset();
     mockUpdateCollectionInDb.mockReset();
     mockDeleteCollectionInDb.mockReset();
+    mockCanCreateCollection.mockReset();
+    mockCanCreateCollection.mockResolvedValue(true);
   });
 
   it("returns a validation error when name is empty", async () => {
@@ -70,6 +74,31 @@ describe("createCollection action", () => {
       name: "No description",
       description: null,
     });
+    expect(result).toEqual({ success: true, data: created });
+  });
+
+  it("rejects a free user who has reached the collection limit", async () => {
+    mockAuth.mockResolvedValueOnce({ user: { id: "user-1", isPro: false } });
+    mockCanCreateCollection.mockResolvedValueOnce(false);
+
+    const result = await createCollection({ name: "One too many" });
+
+    expect(mockCanCreateCollection).toHaveBeenCalledWith("user-1", false);
+    expect(result).toEqual({
+      success: false,
+      error: "You've reached the 3-collection limit on the free plan",
+    });
+    expect(mockCreateCollectionInDb).not.toHaveBeenCalled();
+  });
+
+  it("allows a Pro user past the free-tier collection limit", async () => {
+    mockAuth.mockResolvedValueOnce({ user: { id: "user-1", isPro: true } });
+    const created = { id: "collection-3", name: "Beyond the limit" };
+    mockCreateCollectionInDb.mockResolvedValueOnce(created);
+
+    const result = await createCollection({ name: "Beyond the limit" });
+
+    expect(mockCanCreateCollection).toHaveBeenCalledWith("user-1", true);
     expect(result).toEqual({ success: true, data: created });
   });
 });

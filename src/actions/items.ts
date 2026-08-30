@@ -10,6 +10,8 @@ import {
   toggleItemPin as toggleItemPinInDb,
 } from "@/lib/db/items";
 import type { ItemDetail } from "@/lib/db/items";
+import { canCreateItem } from "@/lib/plan-limits";
+import { PRO_ONLY_TYPES } from "@/lib/constants/item-types";
 
 const CREATABLE_ITEM_TYPES = [
   "snippet",
@@ -122,6 +124,14 @@ export async function createItem(
   const session = await auth();
   if (!session?.user) {
     return { success: false, error: "Unauthorized" };
+  }
+
+  if (PRO_ONLY_TYPES.has(parsed.data.itemTypeName) && !session.user.isPro) {
+    return { success: false, error: "Files and images require DevDrop Pro" };
+  }
+
+  if (!(await canCreateItem(session.user.id, session.user.isPro))) {
+    return { success: false, error: "You've reached the 50-item limit on the free plan" };
   }
 
   try {

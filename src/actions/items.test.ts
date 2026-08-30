@@ -6,6 +6,7 @@ const mockDeleteItemInDb = vi.fn();
 const mockCreateItemInDb = vi.fn();
 const mockToggleItemFavoriteInDb = vi.fn();
 const mockToggleItemPinInDb = vi.fn();
+const mockCanCreateItem = vi.fn();
 
 vi.mock("@/auth", () => ({ auth: mockAuth }));
 vi.mock("@/lib/db/items", () => ({
@@ -15,6 +16,7 @@ vi.mock("@/lib/db/items", () => ({
   toggleItemFavorite: mockToggleItemFavoriteInDb,
   toggleItemPin: mockToggleItemPinInDb,
 }));
+vi.mock("@/lib/plan-limits", () => ({ canCreateItem: mockCanCreateItem }));
 
 const { updateItem, deleteItem, createItem, toggleItemFavorite, toggleItemPin } = await import(
   "./items"
@@ -236,6 +238,8 @@ describe("createItem action", () => {
     mockUpdateItemInDb.mockReset();
     mockDeleteItemInDb.mockReset();
     mockCreateItemInDb.mockReset();
+    mockCanCreateItem.mockReset();
+    mockCanCreateItem.mockResolvedValue(true);
   });
 
   it("returns a validation error when title is empty", async () => {
@@ -391,7 +395,7 @@ describe("createItem action", () => {
 
   it("creates an image item with file metadata", async () => {
     vi.stubEnv("R2_PUBLIC_URL", "https://files.example.com");
-    mockAuth.mockResolvedValueOnce({ user: { id: "user-1" } });
+    mockAuth.mockResolvedValueOnce({ user: { id: "user-1", isPro: true } });
     const created = { id: "item-3", title: "Screenshot" };
     mockCreateItemInDb.mockResolvedValueOnce(created);
 
@@ -424,7 +428,7 @@ describe("createItem action", () => {
 
   it("rejects a fileUrl that isn't scoped to the current user's R2 prefix", async () => {
     vi.stubEnv("R2_PUBLIC_URL", "https://files.example.com");
-    mockAuth.mockResolvedValueOnce({ user: { id: "user-1" } });
+    mockAuth.mockResolvedValueOnce({ user: { id: "user-1", isPro: true } });
 
     const result = await createItem({
       itemTypeName: "image",
@@ -443,7 +447,7 @@ describe("createItem action", () => {
 
   it("rejects a fileUrl pointing at an arbitrary external host", async () => {
     vi.stubEnv("R2_PUBLIC_URL", "https://files.example.com");
-    mockAuth.mockResolvedValueOnce({ user: { id: "user-1" } });
+    mockAuth.mockResolvedValueOnce({ user: { id: "user-1", isPro: true } });
 
     const result = await createItem({
       itemTypeName: "image",
@@ -458,5 +462,59 @@ describe("createItem action", () => {
     expect(result).toEqual({ success: false, error: "Invalid file" });
     expect(mockCreateItemInDb).not.toHaveBeenCalled();
     vi.unstubAllEnvs();
+  });
+
+  it("rejects a Pro-only type for a free user", async () => {
+    vi.stubEnv("R2_PUBLIC_URL", "https://files.example.com");
+    mockAuth.mockResolvedValueOnce({ user: { id: "user-1", isPro: false } });
+
+    const result = await createItem({
+      itemTypeName: "image",
+      title: "Screenshot",
+      tags: [],
+      fileUrl: "https://files.example.com/user-1/abc.png",
+      fileName: "screenshot.png",
+      fileSize: 1024,
+      collectionIds: [],
+    });
+
+    expect(result).toEqual({ success: false, error: "Files and images require DevDrop Pro" });
+    expect(mockCreateItemInDb).not.toHaveBeenCalled();
+    vi.unstubAllEnvs();
+  });
+
+  it("rejects a free user who has reached the item limit", async () => {
+    mockAuth.mockResolvedValueOnce({ user: { id: "user-1", isPro: false } });
+    mockCanCreateItem.mockResolvedValueOnce(false);
+
+    const result = await createItem({
+      itemTypeName: "snippet",
+      title: "One too many",
+      tags: [],
+      collectionIds: [],
+    });
+
+    expect(mockCanCreateItem).toHaveBeenCalledWith("user-1", false);
+    expect(result).toEqual({
+      success: false,
+      error: "You've reached the 50-item limit on the free plan",
+    });
+    expect(mockCreateItemInDb).not.toHaveBeenCalled();
+  });
+
+  it("allows a Pro user past the free-tier item limit", async () => {
+    mockAuth.mockResolvedValueOnce({ user: { id: "user-1", isPro: true } });
+    const created = { id: "item-4", title: "Beyond the limit" };
+    mockCreateItemInDb.mockResolvedValueOnce(created);
+
+    const result = await createItem({
+      itemTypeName: "snippet",
+      title: "Beyond the limit",
+      tags: [],
+      collectionIds: [],
+    });
+
+    expect(mockCanCreateItem).toHaveBeenCalledWith("user-1", true);
+    expect(result).toEqual({ success: true, data: created });
   });
 });

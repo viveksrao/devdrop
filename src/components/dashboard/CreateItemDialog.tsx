@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -14,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { ItemContentField } from "@/components/dashboard/ItemContentField";
 import { FileUpload, type UploadedFile } from "@/components/dashboard/FileUpload";
 import { CollectionPicker } from "@/components/dashboard/CollectionPicker";
@@ -25,6 +27,7 @@ import {
   TEXT_CONTENT_TYPES,
   LANGUAGE_TYPES,
   FILE_TYPES,
+  PRO_ONLY_TYPES,
 } from "@/lib/constants/item-types";
 import { createItem } from "@/actions/items";
 import type { CollectionOption } from "@/lib/db/collections";
@@ -66,6 +69,8 @@ interface CreateItemDialogProps {
 
 export function CreateItemDialog({ open, onOpenChange, collections }: CreateItemDialogProps) {
   const router = useRouter();
+  const { data: session } = useSession();
+  const isPro = session?.user?.isPro ?? false;
   const [itemTypeName, setItemTypeName] = useState<CreatableType>("snippet");
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [file, setFile] = useState<UploadedFile | null>(null);
@@ -136,20 +141,28 @@ export function CreateItemDialog({ open, onOpenChange, collections }: CreateItem
                 const Icon = ITEM_TYPE_ICONS[type];
                 const label = (ITEM_TYPE_LABELS[type] ?? type).replace(/s$/, "");
                 const selected = itemTypeName === type;
+                const locked = PRO_ONLY_TYPES.has(type) && !isPro;
                 return (
                   <button
                     key={type}
                     type="button"
+                    disabled={locked}
                     onClick={() => setItemTypeName(type)}
                     className={cn(
                       "flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-sm transition-colors",
                       selected
                         ? "border-primary bg-primary/10 text-primary"
-                        : "border-border text-muted-foreground hover:text-foreground"
+                        : "border-border text-muted-foreground hover:text-foreground",
+                      locked && "cursor-not-allowed opacity-50 hover:text-muted-foreground"
                     )}
                   >
                     <Icon className="size-3.5" />
                     {label}
+                    {locked && (
+                      <Badge variant="outline" className="text-[10px] text-muted-foreground">
+                        PRO
+                      </Badge>
+                    )}
                   </button>
                 );
               })}

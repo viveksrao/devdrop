@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
+import { SessionProvider } from "@/components/providers/SessionProvider";
 import { ItemDrawerProvider } from "@/components/dashboard/ItemDrawerProvider";
 import { GlobalSearchProvider } from "@/components/dashboard/GlobalSearchProvider";
 import { EditorPreferencesProvider } from "@/components/dashboard/EditorPreferencesProvider";
@@ -34,14 +35,16 @@ export default function RootLayout({
       className={`dark ${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <TooltipProvider>
-          <EditorPreferencesProvider>
-            <ItemDrawerProvider>
-              <GlobalSearchProvider>{children}</GlobalSearchProvider>
-            </ItemDrawerProvider>
-          </EditorPreferencesProvider>
-        </TooltipProvider>
-        <Toaster />
+        <SessionProvider>
+          <TooltipProvider>
+            <EditorPreferencesProvider>
+              <ItemDrawerProvider>
+                <GlobalSearchProvider>{children}</GlobalSearchProvider>
+              </ItemDrawerProvider>
+            </EditorPreferencesProvider>
+          </TooltipProvider>
+          <Toaster />
+        </SessionProvider>
       </body>
     </html>
   );

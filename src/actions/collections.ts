@@ -9,6 +9,7 @@ import {
   toggleCollectionFavorite as toggleCollectionFavoriteInDb,
 } from "@/lib/db/collections";
 import type { CollectionWithStats } from "@/lib/db/collections";
+import { canCreateCollection } from "@/lib/plan-limits";
 
 const createCollectionSchema = z.object({
   name: z.string().trim().min(1, "Name is required"),
@@ -41,6 +42,10 @@ export async function createCollection(
   const session = await auth();
   if (!session?.user) {
     return { success: false, error: "Unauthorized" };
+  }
+
+  if (!(await canCreateCollection(session.user.id, session.user.isPro))) {
+    return { success: false, error: "You've reached the 3-collection limit on the free plan" };
   }
 
   try {

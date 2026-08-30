@@ -10,6 +10,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
   }
 
+  if (!session.user.isPro) {
+    return NextResponse.json(
+      { success: false, error: "File and image uploads require DevDrop Pro" },
+      { status: 403 }
+    );
+  }
+
   const formData = await request.formData();
   const file = formData.get("file");
   const itemTypeName = formData.get("itemTypeName");
