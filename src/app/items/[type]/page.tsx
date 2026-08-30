@@ -5,7 +5,8 @@ import { ItemCard } from "@/components/dashboard/ItemCard";
 import { ImageCard } from "@/components/dashboard/ImageCard";
 import { FileListItem } from "@/components/dashboard/FileListItem";
 import { Pagination } from "@/components/dashboard/Pagination";
-import { getItemTypeNameFromSlug, ITEM_TYPE_LABELS } from "@/lib/constants/item-types";
+import { UpgradePrompt } from "@/components/dashboard/UpgradePrompt";
+import { getItemTypeNameFromSlug, ITEM_TYPE_LABELS, PRO_ONLY_TYPES } from "@/lib/constants/item-types";
 import { ITEMS_PER_PAGE } from "@/lib/constants/pagination";
 import { getItemsByType, getSystemItemTypes } from "@/lib/db/items";
 import { getRecentCollections, getAllCollections } from "@/lib/db/collections";
@@ -32,14 +33,19 @@ export default async function ItemsByTypePage({ params, searchParams }: ItemsByT
   const user = await prisma.user.findUnique({ where: { id: session.user.id } });
   if (!user) redirect("/sign-in");
 
-  const [{ items, totalCount }, itemTypes, recentCollections, allCollections] = await Promise.all([
-    getItemsByType(user.id, typeName, page, ITEMS_PER_PAGE),
+  const label = ITEM_TYPE_LABELS[typeName] ?? typeName;
+  const isGated = PRO_ONLY_TYPES.has(typeName) && !user.isPro;
+
+  const [itemsResult, itemTypes, recentCollections, allCollections] = await Promise.all([
+    isGated
+      ? Promise.resolve({ items: [], totalCount: 0 })
+      : getItemsByType(user.id, typeName, page, ITEMS_PER_PAGE),
     getSystemItemTypes(user.id),
     getRecentCollections(user.id, SIDEBAR_RECENT_COLLECTIONS_COUNT),
     getAllCollections(user.id),
   ]);
+  const { items, totalCount } = itemsResult;
 
-  const label = ITEM_TYPE_LABELS[typeName] ?? typeName;
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
 
   return (
@@ -57,12 +63,16 @@ export default async function ItemsByTypePage({ params, searchParams }: ItemsByT
       <div className="flex flex-col gap-6">
         <div>
           <h1 className="text-2xl font-semibold">{label}</h1>
-          <p className="mt-1 text-muted-foreground">
-            {totalCount} {totalCount === 1 ? "item" : "items"}
-          </p>
+          {!isGated && (
+            <p className="mt-1 text-muted-foreground">
+              {totalCount} {totalCount === 1 ? "item" : "items"}
+            </p>
+          )}
         </div>
 
-        {totalCount === 0 ? (
+        {isGated ? (
+          <UpgradePrompt typeName={typeName} label={label} />
+        ) : totalCount === 0 ? (
           <p className="text-sm text-muted-foreground">
             No {label.toLowerCase()} yet.
           </p>
@@ -86,7 +96,9 @@ export default async function ItemsByTypePage({ params, searchParams }: ItemsByT
           </div>
         )}
 
-        <Pagination currentPage={page} totalPages={totalPages} basePath={`/items/${type}`} />
+        {!isGated && (
+          <Pagination currentPage={page} totalPages={totalPages} basePath={`/items/${type}`} />
+        )}
       </div>
     </DashboardShell>
   );
