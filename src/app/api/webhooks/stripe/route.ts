@@ -63,6 +63,28 @@ export async function POST(request: Request) {
         break;
       }
 
+      case "invoice.payment_failed": {
+        const invoice = event.data.object as Stripe.Invoice;
+        const customerId = invoice.customer as string;
+        const user = await findUserByStripeCustomerId(customerId);
+        console.error(
+          `Stripe invoice payment failed for user ${user?.id ?? "unknown"} (customer ${customerId}), invoice ${invoice.id}`
+        );
+        // isPro is left untouched here — Stripe's subscription.status transition
+        // (e.g. to past_due/unpaid) is handled by customer.subscription.updated.
+        break;
+      }
+
+      case "invoice.payment_succeeded": {
+        const invoice = event.data.object as Stripe.Invoice;
+        const customerId = invoice.customer as string;
+        const user = await findUserByStripeCustomerId(customerId);
+        console.log(
+          `Stripe invoice payment succeeded for user ${user?.id ?? "unknown"} (customer ${customerId}), invoice ${invoice.id}`
+        );
+        break;
+      }
+
       default:
         break;
     }
