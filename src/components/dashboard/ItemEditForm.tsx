@@ -3,6 +3,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { ItemContentField } from "@/components/dashboard/ItemContentField";
 import { CollectionPicker } from "@/components/dashboard/CollectionPicker";
+import { LanguageSelect } from "@/components/dashboard/LanguageSelect";
 import { TEXT_CONTENT_TYPES, LANGUAGE_TYPES } from "@/lib/constants/item-types";
 import type { ItemDetail } from "@/lib/db/items";
 import type { CollectionOption } from "@/lib/db/collections";
@@ -45,6 +46,17 @@ export function ItemEditForm({ itemType, allCollections, form, onChange }: ItemE
         />
       </div>
 
+      {LANGUAGE_TYPES.has(itemType.name) && (
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="edit-language">Language</Label>
+          <LanguageSelect
+            id="edit-language"
+            value={form.language}
+            onChange={(value) => onChange({ ...form, language: value })}
+          />
+        </div>
+      )}
+
       {TEXT_CONTENT_TYPES.has(itemType.name) && (
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="edit-content">Content</Label>
@@ -54,17 +66,6 @@ export function ItemEditForm({ itemType, allCollections, form, onChange }: ItemE
             value={form.content}
             onChange={(value) => onChange({ ...form, content: value })}
             language={form.language}
-          />
-        </div>
-      )}
-
-      {LANGUAGE_TYPES.has(itemType.name) && (
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="edit-language">Language</Label>
-          <Input
-            id="edit-language"
-            value={form.language}
-            onChange={(e) => onChange({ ...form, language: e.target.value })}
           />
         </div>
       )}
