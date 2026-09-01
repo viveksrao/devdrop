@@ -42,6 +42,34 @@ export const MARKDOWN_TYPES = new Set(["note", "prompt"]);
 /** Types backed by an uploaded file. */
 export const FILE_TYPES = new Set(["file", "image"]);
 
+/** Common languages offered in the Language dropdown for snippet/command items. Values match Monaco's language ids (see CodeEditor). */
+export const LANGUAGE_OPTIONS = [
+  { value: "typescript", label: "TypeScript" },
+  { value: "javascript", label: "JavaScript" },
+  { value: "python", label: "Python" },
+  { value: "bash", label: "Bash" },
+  { value: "shell", label: "Shell" },
+  { value: "json", label: "JSON" },
+  { value: "yaml", label: "YAML" },
+  { value: "markdown", label: "Markdown" },
+  { value: "html", label: "HTML" },
+  { value: "css", label: "CSS" },
+  { value: "sql", label: "SQL" },
+  { value: "go", label: "Go" },
+  { value: "rust", label: "Rust" },
+  { value: "java", label: "Java" },
+  { value: "csharp", label: "C#" },
+  { value: "cpp", label: "C++" },
+  { value: "c", label: "C" },
+  { value: "ruby", label: "Ruby" },
+  { value: "php", label: "PHP" },
+  { value: "swift", label: "Swift" },
+  { value: "kotlin", label: "Kotlin" },
+  { value: "dockerfile", label: "Dockerfile" },
+  { value: "graphql", label: "GraphQL" },
+  { value: "plaintext", label: "Plain Text" },
+] as const;
+
 const ITEM_TYPE_NAMES = Object.keys(ITEM_TYPE_ICONS);
 
 export function getItemTypeNameFromSlug(slug: string): string | undefined {

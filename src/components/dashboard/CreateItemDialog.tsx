@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { ItemContentField } from "@/components/dashboard/ItemContentField";
 import { FileUpload, type UploadedFile } from "@/components/dashboard/FileUpload";
 import { CollectionPicker } from "@/components/dashboard/CollectionPicker";
+import { LanguageSelect } from "@/components/dashboard/LanguageSelect";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import {
@@ -188,6 +189,17 @@ export function CreateItemDialog({ open, onOpenChange, collections }: CreateItem
             />
           </div>
 
+          {LANGUAGE_TYPES.has(itemTypeName) && (
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="create-language">Language</Label>
+              <LanguageSelect
+                id="create-language"
+                value={form.language}
+                onChange={(value) => setForm({ ...form, language: value })}
+              />
+            </div>
+          )}
+
           {TEXT_CONTENT_TYPES.has(itemTypeName) && (
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="create-content">Content</Label>
@@ -197,17 +209,6 @@ export function CreateItemDialog({ open, onOpenChange, collections }: CreateItem
                 value={form.content}
                 onChange={(value) => setForm({ ...form, content: value })}
                 language={form.language}
-              />
-            </div>
-          )}
-
-          {LANGUAGE_TYPES.has(itemTypeName) && (
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="create-language">Language</Label>
-              <Input
-                id="create-language"
-                value={form.language}
-                onChange={(e) => setForm({ ...form, language: e.target.value })}
               />
             </div>
           )}
