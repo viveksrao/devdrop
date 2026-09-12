@@ -1,33 +1,14 @@
-# Current Feature AI Explain Code
+# Current Feature
 
 ## Status
 
-In Progress
-
 ## Goals
-
-- Add AI-powered code explanation for snippets and commands in the item drawer using OpenAI "gpt-5-nano"
-- Create an `explainCode` server action with auth, Pro gating, Zod validation, rate limiting
-- Add "Explain" button (Sparkles icon) to code editor window controls header (next to Copy button)
-- Only show for snippet and command types in the item drawer (not in create/edit forms)
-- After generating, show Code/Explain tabs in the editor header to toggle between views
-- Render explanation as markdown in the same container space as the code editor
-- Explanation should be concise (~200-300 words) covering what the code does and key concepts
-- Loading state: Loader2 spinner while generating
-- Pro gating in UI: show Crown icon + tooltip ("AI features require Pro subscription") for free users
-- Error handling via toast (Pro gating, rate limit, AI service errors)
-- Follow existing patterns
-- Unit tests for server action
 
 ## Notes
 
-- Explanations are not saved to the database — regenerated on each click
-- Not available in create/edit forms, only in the item drawer read view
-- `isPro` needs to be passed as a prop to the item drawer / code editor
-- See `docs/ai-integration-plan.md` for full architectural context
-- Full spec: @context/features/ai-explain-spec.md
-
 ## History
+
+- 2026-09-12 - AI Explain Code completed: `explainCode` server action added to `src/actions/ai.ts`, mirroring `summarizeItem`'s shape (Zod-validated `title`/`content` required, optional `language`, auth-gated, Pro-gated, rate-limited via a new `ai-explain` entry — 20/hour, same `${ip}:${userId}` keying — added to `src/lib/rate-limit.ts`); calls the same OpenAI Responses API pattern (`text: { format: { type: "json_object" } }`, "Respond with json only" line), truncates content to 2000 chars, and parses a `{"explanation": "..."}` or bare JSON string response defensively, instructing the model to write markdown; `CodeEditor` (`src/components/dashboard/CodeEditor.tsx`) gained an Explain icon button (Sparkles/Crown/Loader2 depending on state) next to Copy in the window-controls header, plus a Code/Explain tab toggle (mirroring `MarkdownEditor`'s Write/Preview `TabButton` pattern) that appears once an explanation has been generated, rendering it via `react-markdown`/`remark-gfm` in the same container the Monaco editor occupies; the feature is scoped to the read-only item drawer view only via a new optional `title`/`isPro` prop pair — `ItemContentField` only forwards `title` to `CodeEditor` when `readOnly` is true, so `CreateItemDialog`/`ItemEditForm` (which never pass `readOnly`) never render it; `ItemDetailView` gained an `isPro` prop threaded from `ItemDrawer`'s existing `useSession()`-derived `isPro` (previously only passed to `ItemEditForm`); free users clicking Explain see a Crown icon, a "AI features require Pro subscription" tooltip, and a blocking toast on click rather than a request; explanations are ephemeral (not persisted, regenerated per click, cached only in local component state for the session) — verified `npm run lint`, `npm test` (156 passing, 12 new covering validation/auth/Pro-gating/rate-limiting/both response-shape parsing/truncation/language-inclusion/error-handling/429-handling), and `npm run build` all pass, and in-browser via Playwright against the real OpenAI API that: a TypeScript Snippet's Explain button generated an accurate, well-formatted explanation covering the compound-component pattern, React Context usage, and accessibility notes, correctly switching to the Explain tab with the Code tab still toggleable back with no re-fetch; a bash Command (`docker image prune -f`) produced an equally accurate explanation; free-tier gating was verified by temporarily flipping the seeded demo user's `isPro` to `false` via Neon SQL — the Explain button correctly rendered a Crown icon and blocked the request with the expected toast, with no Explain tab appearing — then restored to `true` afterward; and Edit mode on the same Command item confirmed no Explain button/tabs render there (macOS dots + Copy only), with no console errors throughout (see @context/features/ai-explain-spec.md)
 
 - 2026-09-12 - AI Summary completed: `summarizeItem` server action added to `src/actions/ai.ts`, mirroring `generateAutoTags`'s shape exactly (Zod-validated `title`/optional `content`/optional `url`, auth-gated, Pro-gated, rate-limited via a new `ai-summarize` entry — 20/hour, same `${ip}:${userId}` keying — added to `src/lib/rate-limit.ts`); calls the same OpenAI Responses API pattern (`text: { format: { type: "json_object" } }`, with the "Respond with json only" line required to satisfy OpenAI's literal-word-"json" requirement, same fix discovered during AI Auto-Tagging), truncates content to 2000 chars, and parses a `{"summary": "..."}` or bare JSON string response defensively; unlike tag suggestions, the summary directly overwrites the Description field on return (no accept/reject step, since Description is already freely editable before Save) — new `SummarizeButton` component (`src/components/dashboard/SummarizeButton.tsx`, Sparkles icon, ghost variant, disables + relabels to "Summarizing…" while loading) kept intentionally separate from `TagSuggestions` since their result-presentation UX differs; wired into both `CreateItemDialog` and `ItemEditForm` next to the Description field, gated on the same `isPro` plumbing (`useSession()` in the dialog, the existing `isPro` prop threaded through `ItemDrawer` for the edit form) established by AI Auto-Tagging — no new gating plumbing needed; works for all item types since the prompt is built from whatever title/content/url is currently in the form (file/image items have no content field shown, so the summary is generated from title alone, same defensive handling as `generateAutoTags`); verified `npm run lint`, `npm test` (143 passing, 11 new covering validation/auth/Pro-gating/rate-limiting/both response-shape parsing/truncation/URL-inclusion/title-only fallback/error-handling), and `npm run build` all pass, and in-browser via Playwright against the real OpenAI API that: creating a Note with a 4-item markdown checklist and clicking Summarize produced an accurate, well-formed 1-2 sentence description ("A practical checklist for cleaning up Docker resources to reclaim disk space, including stopping unused containers, pruning dangling images, removing unused volumes, and performing a full system prune.") that persisted correctly through a full create → verify round trip; the Item Drawer's edit-mode Summarize button correctly appears pre-filled with the same description and is wired identically; and the button is correctly hidden for free users in both surfaces (verified by temporarily flipping the seeded demo user's `isPro` via Neon SQL, then restoring it to `true` afterward) — cleaned up the test item via the existing delete flow, confirming item/collection counts returned to their original seed values (see @context/features/ai-summary-spec.md)
 - 2026-09-11 - AI Auto-Tagging completed:
