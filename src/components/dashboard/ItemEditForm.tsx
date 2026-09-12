@@ -4,6 +4,7 @@ import { Label } from "@/components/ui/label";
 import { ItemContentField } from "@/components/dashboard/ItemContentField";
 import { CollectionPicker } from "@/components/dashboard/CollectionPicker";
 import { LanguageSelect } from "@/components/dashboard/LanguageSelect";
+import { TagSuggestions } from "@/components/dashboard/TagSuggestions";
 import { TEXT_CONTENT_TYPES, LANGUAGE_TYPES } from "@/lib/constants/item-types";
 import type { ItemDetail } from "@/lib/db/items";
 import type { CollectionOption } from "@/lib/db/collections";
@@ -23,9 +24,25 @@ interface ItemEditFormProps {
   allCollections: CollectionOption[];
   form: ItemEditFormState;
   onChange: (form: ItemEditFormState) => void;
+  isPro: boolean;
 }
 
-export function ItemEditForm({ itemType, allCollections, form, onChange }: ItemEditFormProps) {
+export function ItemEditForm({
+  itemType,
+  allCollections,
+  form,
+  onChange,
+  isPro,
+}: ItemEditFormProps) {
+  function handleAcceptTag(tag: string) {
+    const currentTags = form.tags
+      .split(",")
+      .map((t) => t.trim())
+      .filter(Boolean);
+    if (currentTags.includes(tag)) return;
+    onChange({ ...form, tags: [...currentTags, tag].join(", ") });
+  }
+
   return (
     <div className="flex min-w-0 flex-col gap-4 overflow-y-auto px-4 pb-4">
       <div className="flex flex-col gap-1.5">
@@ -89,6 +106,17 @@ export function ItemEditForm({ itemType, allCollections, form, onChange }: ItemE
           value={form.tags}
           onChange={(e) => onChange({ ...form, tags: e.target.value })}
         />
+        {isPro && (
+          <TagSuggestions
+            title={form.title}
+            content={form.content}
+            existingTags={form.tags
+              .split(",")
+              .map((t) => t.trim().toLowerCase())
+              .filter(Boolean)}
+            onAccept={handleAcceptTag}
+          />
+        )}
       </div>
 
       <CollectionPicker

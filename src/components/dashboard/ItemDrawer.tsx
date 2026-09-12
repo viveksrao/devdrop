@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { Check, Copy, Pencil, Pin, Star, Trash2, X } from "lucide-react";
 import {
@@ -50,6 +51,8 @@ interface ItemDrawerProps {
 
 export function ItemDrawer({ itemId, open, onOpenChange }: ItemDrawerProps) {
   const router = useRouter();
+  const { data: session } = useSession();
+  const isPro = session?.user?.isPro ?? false;
   const [item, setItem] = useState<ItemDetail | null>(null);
   const [loadedItemId, setLoadedItemId] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -325,6 +328,7 @@ export function ItemDrawer({ itemId, open, onOpenChange }: ItemDrawerProps) {
                 allCollections={allCollections}
                 form={editForm}
                 onChange={setEditForm}
+                isPro={isPro}
               />
             ) : (
               <ItemDetailView item={item} />

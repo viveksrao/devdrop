@@ -20,6 +20,7 @@ import { ItemContentField } from "@/components/dashboard/ItemContentField";
 import { FileUpload, type UploadedFile } from "@/components/dashboard/FileUpload";
 import { CollectionPicker } from "@/components/dashboard/CollectionPicker";
 import { LanguageSelect } from "@/components/dashboard/LanguageSelect";
+import { TagSuggestions } from "@/components/dashboard/TagSuggestions";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import {
@@ -77,6 +78,15 @@ export function CreateItemDialog({ open, onOpenChange, collections }: CreateItem
   const [file, setFile] = useState<UploadedFile | null>(null);
   const [collectionIds, setCollectionIds] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+
+  function handleAcceptTag(tag: string) {
+    const currentTags = form.tags
+      .split(",")
+      .map((t) => t.trim())
+      .filter(Boolean);
+    if (currentTags.includes(tag)) return;
+    setForm({ ...form, tags: [...currentTags, tag].join(", ") });
+  }
 
   function handleOpenChange(nextOpen: boolean) {
     if (!nextOpen) {
@@ -244,6 +254,17 @@ export function CreateItemDialog({ open, onOpenChange, collections }: CreateItem
               value={form.tags}
               onChange={(e) => setForm({ ...form, tags: e.target.value })}
             />
+            {isPro && (
+              <TagSuggestions
+                title={form.title}
+                content={form.content}
+                existingTags={form.tags
+                  .split(",")
+                  .map((t) => t.trim().toLowerCase())
+                  .filter(Boolean)}
+                onAccept={handleAcceptTag}
+              />
+            )}
           </div>
 
           <CollectionPicker
