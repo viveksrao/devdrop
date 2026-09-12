@@ -8,9 +8,10 @@ import type { ItemDetail } from "@/lib/db/items";
 
 interface ItemDetailViewProps {
   item: ItemDetail;
+  isPro?: boolean;
 }
 
-export function ItemDetailView({ item }: ItemDetailViewProps) {
+export function ItemDetailView({ item, isPro }: ItemDetailViewProps) {
   return (
     <div className="flex min-w-0 flex-col gap-4 overflow-y-auto px-4 pb-4">
       {item.description && (
@@ -33,6 +34,8 @@ export function ItemDetailView({ item }: ItemDetailViewProps) {
               value={item.content}
               language={item.language}
               readOnly
+              title={item.title}
+              isPro={isPro}
             />
           </div>
         </div>

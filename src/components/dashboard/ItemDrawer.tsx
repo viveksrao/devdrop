@@ -331,7 +331,7 @@ export function ItemDrawer({ itemId, open, onOpenChange }: ItemDrawerProps) {
                 isPro={isPro}
               />
             ) : (
-              <ItemDetailView item={item} />
+              <ItemDetailView item={item} isPro={isPro} />
             )}
 
             <div className="mt-auto border-t p-4 text-xs text-muted-foreground">

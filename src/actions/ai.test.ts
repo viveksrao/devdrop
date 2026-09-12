@@ -22,7 +22,7 @@ vi.mock("next/headers", () => ({
   headers: async () => ({ get: mockHeadersGet }),
 }));
 
-const { generateAutoTags, summarizeItem } = await import("./ai");
+const { generateAutoTags, summarizeItem, explainCode } = await import("./ai");
 
 beforeEach(() => {
   mockAuth.mockReset();
@@ -261,6 +261,152 @@ describe("summarizeItem", () => {
     expect(result).toEqual({
       success: false,
       error: "AI summary failed. Please try again.",
+    });
+  });
+});
+
+describe("explainCode", () => {
+  it("rejects a missing title", async () => {
+    const result = await explainCode({ title: "  ", content: "console.log(1)" });
+
+    expect(result).toEqual({ success: false, error: "Title is required" });
+    expect(mockAuth).not.toHaveBeenCalled();
+  });
+
+  it("rejects missing content", async () => {
+    const result = await explainCode({ title: "My snippet", content: "  " });
+
+    expect(result).toEqual({ success: false, error: "Content is required" });
+    expect(mockAuth).not.toHaveBeenCalled();
+  });
+
+  it("rejects unauthenticated requests", async () => {
+    mockAuth.mockResolvedValueOnce(null);
+
+    const result = await explainCode({ title: "My snippet", content: "console.log(1)" });
+
+    expect(result).toEqual({ success: false, error: "Unauthorized" });
+    expect(mockResponsesCreate).not.toHaveBeenCalled();
+  });
+
+  it("rejects free (non-Pro) users", async () => {
+    mockAuth.mockResolvedValueOnce({ user: { id: "user-1", isPro: false } });
+
+    const result = await explainCode({ title: "My snippet", content: "console.log(1)" });
+
+    expect(result).toEqual({ success: false, error: "AI features require DevDrop Pro" });
+    expect(mockResponsesCreate).not.toHaveBeenCalled();
+  });
+
+  it("returns a rate-limit error when the limit is exceeded", async () => {
+    mockAuth.mockResolvedValueOnce({ user: { id: "user-1", isPro: true } });
+    mockCheckRateLimit.mockResolvedValueOnce({ success: false, remaining: 0, reset: 0 });
+
+    const result = await explainCode({ title: "My snippet", content: "console.log(1)" });
+
+    expect(result).toEqual({
+      success: false,
+      error: "Too many AI requests. Please try again shortly.",
+    });
+    expect(mockResponsesCreate).not.toHaveBeenCalled();
+  });
+
+  it("parses an explanation from a {explanation: ...} JSON response", async () => {
+    mockAuth.mockResolvedValueOnce({ user: { id: "user-1", isPro: true } });
+    mockResponsesCreate.mockResolvedValueOnce({
+      output_text: JSON.stringify({ explanation: "This logs 1 to the console." }),
+    });
+
+    const result = await explainCode({ title: "A snippet", content: "console.log(1)" });
+
+    expect(result).toEqual({
+      success: true,
+      data: { explanation: "This logs 1 to the console." },
+    });
+  });
+
+  it("parses an explanation from a bare JSON string response", async () => {
+    mockAuth.mockResolvedValueOnce({ user: { id: "user-1", isPro: true } });
+    mockResponsesCreate.mockResolvedValueOnce({
+      output_text: JSON.stringify("A short explanation."),
+    });
+
+    const result = await explainCode({ title: "A snippet", content: "console.log(1)" });
+
+    expect(result).toEqual({ success: true, data: { explanation: "A short explanation." } });
+  });
+
+  it("returns an empty explanation when the response is unparseable", async () => {
+    mockAuth.mockResolvedValueOnce({ user: { id: "user-1", isPro: true } });
+    mockResponsesCreate.mockResolvedValueOnce({ output_text: "not json" });
+
+    const result = await explainCode({ title: "A snippet", content: "console.log(1)" });
+
+    expect(result).toEqual({ success: true, data: { explanation: "" } });
+  });
+
+  it("truncates content to 2000 chars before calling the model", async () => {
+    mockAuth.mockResolvedValueOnce({ user: { id: "user-1", isPro: true } });
+    mockResponsesCreate.mockResolvedValueOnce({
+      output_text: JSON.stringify({ explanation: "" }),
+    });
+
+    const longContent = "x".repeat(5000);
+    await explainCode({ title: "A snippet", content: longContent });
+
+    const call = mockResponsesCreate.mock.calls[0][0];
+    expect(call.input).toContain("x".repeat(2000));
+    expect(call.input).not.toContain("x".repeat(2001));
+  });
+
+  it("includes the language in the prompt when provided", async () => {
+    mockAuth.mockResolvedValueOnce({ user: { id: "user-1", isPro: true } });
+    mockResponsesCreate.mockResolvedValueOnce({
+      output_text: JSON.stringify({ explanation: "" }),
+    });
+
+    await explainCode({ title: "A snippet", content: "console.log(1)", language: "javascript" });
+
+    const call = mockResponsesCreate.mock.calls[0][0];
+    expect(call.input).toContain("Language: javascript");
+  });
+
+  it("omits the language line when not provided", async () => {
+    mockAuth.mockResolvedValueOnce({ user: { id: "user-1", isPro: true } });
+    mockResponsesCreate.mockResolvedValueOnce({
+      output_text: JSON.stringify({ explanation: "" }),
+    });
+
+    await explainCode({ title: "A snippet", content: "console.log(1)" });
+
+    const call = mockResponsesCreate.mock.calls[0][0];
+    expect(call.input).not.toContain("Language:");
+  });
+
+  it("catches unexpected errors and returns a generic message", async () => {
+    mockAuth.mockResolvedValueOnce({ user: { id: "user-1", isPro: true } });
+    mockResponsesCreate.mockRejectedValueOnce(new Error("network down"));
+
+    const result = await explainCode({ title: "A snippet", content: "console.log(1)" });
+
+    expect(result).toEqual({
+      success: false,
+      error: "AI explanation failed. Please try again.",
+    });
+  });
+
+  it("returns a friendlier message on a 429 from OpenAI", async () => {
+    mockAuth.mockResolvedValueOnce({ user: { id: "user-1", isPro: true } });
+    const OpenAI = (await import("openai")).default;
+    mockResponsesCreate.mockRejectedValueOnce(
+      new OpenAI.APIError(429, { message: "rate limited" }, "rate limited", new Headers())
+    );
+
+    const result = await explainCode({ title: "A snippet", content: "console.log(1)" });
+
+    expect(result).toEqual({
+      success: false,
+      error: "AI is busy right now — try again in a moment.",
     });
   });
 });

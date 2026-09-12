@@ -10,6 +10,9 @@ interface ItemContentFieldProps {
   language?: string | null;
   readOnly?: boolean;
   id?: string;
+  /** Item title, passed through to CodeEditor to enable the Explain feature (read-only view only). */
+  title?: string;
+  isPro?: boolean;
 }
 
 export function ItemContentField({
@@ -19,9 +22,20 @@ export function ItemContentField({
   language,
   readOnly = false,
   id,
+  title,
+  isPro,
 }: ItemContentFieldProps) {
   if (CODE_TYPES.has(itemTypeName)) {
-    return <CodeEditor value={value} onChange={onChange} language={language} readOnly={readOnly} />;
+    return (
+      <CodeEditor
+        value={value}
+        onChange={onChange}
+        language={language}
+        readOnly={readOnly}
+        title={readOnly ? title : undefined}
+        isPro={isPro}
+      />
+    );
   }
 
   if (MARKDOWN_TYPES.has(itemTypeName)) {
