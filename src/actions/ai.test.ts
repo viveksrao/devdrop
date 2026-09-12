@@ -22,7 +22,7 @@ vi.mock("next/headers", () => ({
   headers: async () => ({ get: mockHeadersGet }),
 }));
 
-const { generateAutoTags, summarizeItem, explainCode } = await import("./ai");
+const { generateAutoTags, summarizeItem, explainCode, optimizePrompt } = await import("./ai");
 
 beforeEach(() => {
   mockAuth.mockReset();
@@ -403,6 +403,128 @@ describe("explainCode", () => {
     );
 
     const result = await explainCode({ title: "A snippet", content: "console.log(1)" });
+
+    expect(result).toEqual({
+      success: false,
+      error: "AI is busy right now — try again in a moment.",
+    });
+  });
+});
+
+describe("optimizePrompt", () => {
+  it("rejects a missing title", async () => {
+    const result = await optimizePrompt({ title: "  ", content: "Write a poem" });
+
+    expect(result).toEqual({ success: false, error: "Title is required" });
+    expect(mockAuth).not.toHaveBeenCalled();
+  });
+
+  it("rejects missing content", async () => {
+    const result = await optimizePrompt({ title: "My prompt", content: "  " });
+
+    expect(result).toEqual({ success: false, error: "Content is required" });
+    expect(mockAuth).not.toHaveBeenCalled();
+  });
+
+  it("rejects unauthenticated requests", async () => {
+    mockAuth.mockResolvedValueOnce(null);
+
+    const result = await optimizePrompt({ title: "My prompt", content: "Write a poem" });
+
+    expect(result).toEqual({ success: false, error: "Unauthorized" });
+    expect(mockResponsesCreate).not.toHaveBeenCalled();
+  });
+
+  it("rejects free (non-Pro) users", async () => {
+    mockAuth.mockResolvedValueOnce({ user: { id: "user-1", isPro: false } });
+
+    const result = await optimizePrompt({ title: "My prompt", content: "Write a poem" });
+
+    expect(result).toEqual({ success: false, error: "AI features require DevDrop Pro" });
+    expect(mockResponsesCreate).not.toHaveBeenCalled();
+  });
+
+  it("returns a rate-limit error when the limit is exceeded", async () => {
+    mockAuth.mockResolvedValueOnce({ user: { id: "user-1", isPro: true } });
+    mockCheckRateLimit.mockResolvedValueOnce({ success: false, remaining: 0, reset: 0 });
+
+    const result = await optimizePrompt({ title: "My prompt", content: "Write a poem" });
+
+    expect(result).toEqual({
+      success: false,
+      error: "Too many AI requests. Please try again shortly.",
+    });
+    expect(mockResponsesCreate).not.toHaveBeenCalled();
+  });
+
+  it("parses an optimized prompt from a {optimizedPrompt: ...} JSON response", async () => {
+    mockAuth.mockResolvedValueOnce({ user: { id: "user-1", isPro: true } });
+    mockResponsesCreate.mockResolvedValueOnce({
+      output_text: JSON.stringify({ optimizedPrompt: "Write a haiku about autumn leaves." }),
+    });
+
+    const result = await optimizePrompt({ title: "A prompt", content: "write a poem" });
+
+    expect(result).toEqual({
+      success: true,
+      data: { optimizedPrompt: "Write a haiku about autumn leaves." },
+    });
+  });
+
+  it("parses an optimized prompt from a bare JSON string response", async () => {
+    mockAuth.mockResolvedValueOnce({ user: { id: "user-1", isPro: true } });
+    mockResponsesCreate.mockResolvedValueOnce({
+      output_text: JSON.stringify("A refined prompt."),
+    });
+
+    const result = await optimizePrompt({ title: "A prompt", content: "write a poem" });
+
+    expect(result).toEqual({ success: true, data: { optimizedPrompt: "A refined prompt." } });
+  });
+
+  it("returns an empty optimized prompt when the response is unparseable", async () => {
+    mockAuth.mockResolvedValueOnce({ user: { id: "user-1", isPro: true } });
+    mockResponsesCreate.mockResolvedValueOnce({ output_text: "not json" });
+
+    const result = await optimizePrompt({ title: "A prompt", content: "write a poem" });
+
+    expect(result).toEqual({ success: true, data: { optimizedPrompt: "" } });
+  });
+
+  it("truncates content to 2000 chars before calling the model", async () => {
+    mockAuth.mockResolvedValueOnce({ user: { id: "user-1", isPro: true } });
+    mockResponsesCreate.mockResolvedValueOnce({
+      output_text: JSON.stringify({ optimizedPrompt: "" }),
+    });
+
+    const longContent = "x".repeat(5000);
+    await optimizePrompt({ title: "A prompt", content: longContent });
+
+    const call = mockResponsesCreate.mock.calls[0][0];
+    expect(call.input).toContain("x".repeat(2000));
+    expect(call.input).not.toContain("x".repeat(2001));
+  });
+
+  it("catches unexpected errors and returns a generic message", async () => {
+    mockAuth.mockResolvedValueOnce({ user: { id: "user-1", isPro: true } });
+    mockResponsesCreate.mockRejectedValueOnce(new Error("network down"));
+
+    const result = await optimizePrompt({ title: "A prompt", content: "write a poem" });
+
+    expect(result).toEqual({
+      success: false,
+      error: "AI prompt optimization failed. Please try again.",
+    });
+  });
+
+  it("returns a friendlier message on a 429 from OpenAI", async () => {
+    mockAuth.mockResolvedValueOnce({ user: { id: "user-1", isPro: true } });
+    const OpenAI = (await import("openai")).default;
+    mockResponsesCreate.mockRejectedValueOnce(
+      new OpenAI.APIError(429, { message: "rate limited" }, "rate limited", new Headers())
+    );
+
+    const result = await optimizePrompt({ title: "A prompt", content: "write a poem" });
 
     expect(result).toEqual({
       success: false,

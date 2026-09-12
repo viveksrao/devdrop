@@ -92,6 +92,8 @@ export function ItemEditForm({
             value={form.content}
             onChange={(value) => onChange({ ...form, content: value })}
             language={form.language}
+            title={form.title}
+            isPro={isPro}
           />
         </div>
       )}

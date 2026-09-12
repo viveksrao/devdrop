@@ -10,7 +10,10 @@ interface ItemContentFieldProps {
   language?: string | null;
   readOnly?: boolean;
   id?: string;
-  /** Item title, passed through to CodeEditor to enable the Explain feature (read-only view only). */
+  /**
+   * Item title, passed through to CodeEditor to enable the Explain feature (read-only view
+   * only) and to MarkdownEditor to enable the Optimize feature for prompt items (edit mode only).
+   */
   title?: string;
   isPro?: boolean;
 }
@@ -39,7 +42,16 @@ export function ItemContentField({
   }
 
   if (MARKDOWN_TYPES.has(itemTypeName)) {
-    return <MarkdownEditor value={value} onChange={onChange} readOnly={readOnly} />;
+    return (
+      <MarkdownEditor
+        value={value}
+        onChange={onChange}
+        readOnly={readOnly}
+        title={itemTypeName === "prompt" ? title : undefined}
+        isPro={isPro}
+        enableOptimize={itemTypeName === "prompt"}
+      />
+    );
   }
 
   if (readOnly) {

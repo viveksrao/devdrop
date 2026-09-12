@@ -228,6 +228,90 @@ export async function explainCode(
   }
 }
 
+const optimizePromptSchema = z.object({
+  title: z.string().trim().min(1, "Title is required"),
+  content: z.string().trim().min(1, "Content is required"),
+});
+
+export type OptimizePromptPayload = z.infer<typeof optimizePromptSchema>;
+
+function parseOptimizedPromptFromResponse(raw: string): string {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return "";
+  }
+
+  if (typeof parsed === "string") {
+    return parsed.trim();
+  }
+
+  if (
+    parsed &&
+    typeof parsed === "object" &&
+    typeof (parsed as { optimizedPrompt?: unknown }).optimizedPrompt === "string"
+  ) {
+    return (parsed as { optimizedPrompt: string }).optimizedPrompt.trim();
+  }
+
+  return "";
+}
+
+export async function optimizePrompt(
+  data: OptimizePromptPayload
+): Promise<ActionResult<{ optimizedPrompt: string }>> {
+  const parsed = optimizePromptSchema.safeParse(data);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message };
+  }
+
+  const session = await auth();
+  if (!session?.user) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  if (!session.user.isPro) {
+    return { success: false, error: "AI features require DevDrop Pro" };
+  }
+
+  const ip = getClientIpFromHeaders(await headers());
+  const rateLimit = await checkRateLimit("ai-optimize-prompt", `${ip}:${session.user.id}`);
+  if (!rateLimit.success) {
+    return { success: false, error: "Too many AI requests. Please try again shortly." };
+  }
+
+  const { title, content } = parsed.data;
+  const truncatedContent = content.slice(0, MAX_CONTENT_LENGTH);
+
+  try {
+    const response = await openai.responses.create({
+      model: AI_MODEL,
+      instructions:
+        "You refine AI prompts written by developers so they get better results from AI models. " +
+        "Always respond with json, returning the refined prompt as a json object shaped like " +
+        `{"optimizedPrompt": "..."}. Improve clarity, specificity, and structure — add missing ` +
+        "context, remove ambiguity, and tighten wording — while preserving the original intent " +
+        "and any placeholders/variables. If the prompt is already clear and well-structured, " +
+        "return it unchanged rather than making superficial edits.",
+      input: `Title: ${title}\n\nPrompt:\n${truncatedContent}\n\n` + "Respond with json only.",
+      text: {
+        format: { type: "json_object" },
+      },
+    });
+
+    const optimizedPrompt = parseOptimizedPromptFromResponse(response.output_text ?? "");
+
+    return { success: true, data: { optimizedPrompt } };
+  } catch (error) {
+    console.error("Failed to optimize prompt:", error);
+    if (error instanceof OpenAI.APIError && error.status === 429) {
+      return { success: false, error: "AI is busy right now — try again in a moment." };
+    }
+    return { success: false, error: "AI prompt optimization failed. Please try again." };
+  }
+}
+
 export async function generateAutoTags(
   data: GenerateAutoTagsPayload
 ): Promise<ActionResult<{ tags: string[] }>> {

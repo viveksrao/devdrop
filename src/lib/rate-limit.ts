@@ -25,6 +25,7 @@ const RATE_LIMIT_CONFIGS = {
   "ai-suggest-tags": { limit: 20, window: "1 h" },
   "ai-summarize": { limit: 20, window: "1 h" },
   "ai-explain": { limit: 20, window: "1 h" },
+  "ai-optimize-prompt": { limit: 20, window: "1 h" },
 } as const;
 
 export type RateLimitName = keyof typeof RATE_LIMIT_CONFIGS;

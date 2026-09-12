@@ -3,20 +3,28 @@
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Check, Copy } from "lucide-react";
+import { toast } from "sonner";
+import { Check, Copy, Crown, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { optimizePrompt } from "@/actions/ai";
 
 const MAX_HEIGHT = 400;
 const MIN_HEIGHT = 100;
 
-type MarkdownTab = "write" | "preview";
+type MarkdownTab = "write" | "preview" | "optimized";
 
 interface MarkdownEditorProps {
   value: string;
   onChange?: (value: string) => void;
   readOnly?: boolean;
   className?: string;
+  /** Item title, used to build the Optimize prompt. Passing this together with enableOptimize shows the Optimize button. */
+  title?: string;
+  isPro?: boolean;
+  /** Shows the Optimize button. Scoped to prompt items only — not note, which shares this editor. */
+  enableOptimize?: boolean;
 }
 
 export function MarkdownEditor({
@@ -24,14 +32,58 @@ export function MarkdownEditor({
   onChange,
   readOnly = false,
   className,
+  title,
+  isPro = false,
+  enableOptimize = false,
 }: MarkdownEditorProps) {
   const [tab, setTab] = useState<MarkdownTab>(readOnly ? "preview" : "write");
   const [copied, setCopied] = useState(false);
+  const [isOptimizing, setIsOptimizing] = useState(false);
+  const [optimizedPrompt, setOptimizedPrompt] = useState<string | null>(null);
+
+  const canOptimize = enableOptimize && !readOnly && Boolean(title);
 
   async function handleCopy() {
     await navigator.clipboard.writeText(value);
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
+  }
+
+  async function handleOptimize() {
+    if (!isPro) {
+      toast.error("AI features require Pro subscription");
+      return;
+    }
+
+    if (optimizedPrompt !== null) {
+      setTab("optimized");
+      return;
+    }
+
+    setIsOptimizing(true);
+    const result = await optimizePrompt({ title: title ?? "", content: value });
+    setIsOptimizing(false);
+
+    if (!result.success) {
+      toast.error(result.error ?? "AI prompt optimization failed. Please try again.");
+      return;
+    }
+
+    setOptimizedPrompt(result.data?.optimizedPrompt ?? "");
+    setTab("optimized");
+  }
+
+  function handleUseOptimized() {
+    if (optimizedPrompt) {
+      onChange?.(optimizedPrompt);
+    }
+    setOptimizedPrompt(null);
+    setTab("write");
+  }
+
+  function handleDiscardOptimized() {
+    setOptimizedPrompt(null);
+    setTab("write");
   }
 
   return (
@@ -52,23 +104,77 @@ export function MarkdownEditor({
             <TabButton active={tab === "preview"} onClick={() => setTab("preview")}>
               Preview
             </TabButton>
+            {optimizedPrompt !== null && (
+              <TabButton active={tab === "optimized"} onClick={() => setTab("optimized")}>
+                Optimized
+              </TabButton>
+            )}
           </div>
         )}
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-xs"
-          className="text-white/60 hover:bg-white/10 hover:text-white"
-          onClick={handleCopy}
-        >
-          {copied ? <Check className="text-emerald-400" /> : <Copy />}
-        </Button>
+        <div className="flex items-center gap-2">
+          {canOptimize && (
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-xs"
+                    className="text-white/60 hover:bg-white/10 hover:text-white"
+                    onClick={handleOptimize}
+                    disabled={isOptimizing}
+                  >
+                    {isOptimizing ? (
+                      <Loader2 className="animate-spin" />
+                    ) : !isPro ? (
+                      <Crown />
+                    ) : (
+                      <Sparkles />
+                    )}
+                  </Button>
+                }
+              />
+              {!isPro && <TooltipContent>AI features require Pro subscription</TooltipContent>}
+            </Tooltip>
+          )}
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-xs"
+            className="text-white/60 hover:bg-white/10 hover:text-white"
+            onClick={handleCopy}
+          >
+            {copied ? <Check className="text-emerald-400" /> : <Copy />}
+          </Button>
+        </div>
       </div>
       <div
         style={{ maxHeight: MAX_HEIGHT, minHeight: MIN_HEIGHT }}
         className="overflow-y-auto"
       >
-        {tab === "write" && !readOnly ? (
+        {tab === "optimized" && optimizedPrompt !== null ? (
+          <div className="flex h-full flex-col">
+            <div className="markdown-preview flex-1 overflow-y-auto p-3">
+              {optimizedPrompt ? (
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{optimizedPrompt}</ReactMarkdown>
+              ) : (
+                <p className="text-xs text-white/30">
+                  Your prompt already looks well-optimized — no changes suggested.
+                </p>
+              )}
+            </div>
+            {optimizedPrompt && (
+              <div className="flex items-center justify-end gap-2 border-t border-white/10 p-2">
+                <Button type="button" variant="ghost" size="sm" onClick={handleDiscardOptimized}>
+                  Discard
+                </Button>
+                <Button type="button" size="sm" onClick={handleUseOptimized}>
+                  Use this prompt
+                </Button>
+              </div>
+            )}
+          </div>
+        ) : tab === "write" && !readOnly ? (
           <textarea
             value={value}
             onChange={(e) => onChange?.(e.target.value)}

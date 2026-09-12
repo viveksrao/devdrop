@@ -228,6 +228,8 @@ export function CreateItemDialog({ open, onOpenChange, collections }: CreateItem
                 value={form.content}
                 onChange={(value) => setForm({ ...form, content: value })}
                 language={form.language}
+                title={form.title}
+                isPro={isPro}
               />
             </div>
           )}
