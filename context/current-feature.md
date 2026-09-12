@@ -1,76 +1,14 @@
-# Current Feature: AI Auto-Tagging
+# Current Feature
 
 ## Status
 
-In Progress
-
 ## Goals
-
-- Create OpenAI client utility with `AI_MODEL` constant (if not already created by a prior AI feature)
-- Use the standard openai SDK and keep it simple
-- Create `generateAutoTags` server action with auth, Pro gating, Zod validation, rate limiting
-- Add AI rate limit config (20 requests/hour per user) to existing rate limit utility (if not already added)
-- Add "Suggest Tags" button (Sparkles icon, ghost variant) near the tags input in create item dialog and item drawer edit mode
-- Display suggested tags as badges with accept (check) and reject (X) controls per tag
-- Accepted tags get added to the item's tag list
-- Tags are freeform (not limited to existing tags in the database)
-- Truncate content to 2000 chars before API call
-- Hide the Suggest Tags button for free users (Pro-only UI gating)
-- Error handling via toast (Pro gating, rate limit, AI service errors)
-- Follow existing patterns
-- Unit tests for server action
 
 ## Notes
 
-- `OPENAI_API_KEY` already in `.env`
-- `isPro` is available server-side via session but not passed to create/edit UI components — use server-side gating for enforcement, UI gating for button visibility requires passing `isPro` as a prop or fetching it client-side
-- See `docs/ai-integration-plan.md` for full architectural context
-
-### CRITICAL: OpenAI SDK & gpt-5-nano gotchas
-
-The `openai` npm package v6+ has TWO different APIs. **gpt-5-nano does NOT work with the Chat Completions API** — it returns empty content. Must use the **Responses API** instead.
-
-**Use the Responses API (NOT Chat Completions):**
-
-```typescript
-// CORRECT — Responses API (works with gpt-5-nano)
-const response = await client.responses.create({
-  model: 'gpt-5-nano',
-  instructions: 'You are a developer tool assistant...',
-  input: 'Suggest 3-5 tags for this snippet...',
-  text: {
-    format: { type: 'json_object' },
-  },
-});
-const text = response.output_text; // <-- this is where the content is
-
-// WRONG — Chat Completions API (returns empty content with gpt-5-nano)
-const completion = await client.chat.completions.create({
-  model: 'gpt-5-nano',
-  messages: [{ role: 'user', content: '...' }],
-});
-// completion.choices[0].message.content will be "" (empty string)
-```
-
-**Key differences from Chat Completions:**
-
-| Chat Completions | Responses API |
-|---|---|
-| `client.chat.completions.create()` | `client.responses.create()` |
-| `messages: [{ role, content }]` | `instructions` (system) + `input` (user) |
-| `response_format: { type: 'json_object' }` | `text: { format: { type: 'json_object' } }` |
-| `completion.choices[0].message.content` | `response.output_text` |
-| `max_tokens` / `max_completion_tokens` | not needed (or use `max_output_tokens`) |
-
-**Other gotchas:**
-
-- `max_tokens` is NOT supported by gpt-5-nano — use `max_completion_tokens` if using Chat Completions (but don't use Chat Completions, use Responses API)
-- `zodResponseFormat` structured output consumes excessive tokens with this model and hits length limits — use `json_object` format instead and parse manually
-- The model may return `{"tags": ["a", "b"]}` OR `["a", "b"]` — handle both formats
-- Always normalize tags to lowercase after receiving them
-
 ## History
 
+- 2026-09-11 - AI Auto-Tagging completed: new `src/lib/openai.ts` (OpenAI client singleton + `AI_MODEL = "gpt-5-nano"` constant) establishes the OpenAI foundation for future AI features; `generateAutoTags` server action added at `src/actions/ai.ts` — Zod-validated (`title` required, `content` optional), auth-gated via `auth()`, Pro-gated (`session.user.isPro`), rate-limited via a new `ai-suggest-tags` entry (20/hour, keyed `${ip}:${userId}` via a local `getClientIpFromHeaders` helper mirroring `billing.ts`'s precedent since server actions have no `Request` object) added to `src/lib/rate-limit.ts`; calls OpenAI's **Responses API** (`openai.responses.create`, not Chat Completions — gpt-5-nano returns empty content under Chat Completions per the spec's documented gotcha) with `text: { format: { type: "json_object" } }`, truncates content to 2000 chars before sending, parses either a `{"tags": [...]}` object or a bare `[...]` array response shape, lowercases and caps at 5 tags, and distinguishes a 429 `OpenAI.APIError` for a friendlier busy-state message; new shared `TagSuggestions` component (`src/components/dashboard/TagSuggestions.tsx`) renders a ghost-variant Sparkles "Suggest tags" button plus dashed-outline badge suggestions with individual accept (check)/reject (X) controls, filtering out any suggestion that already matches an existing tag; wired into both `CreateItemDialog` (already had `isPro` via `useSession()`) and `ItemEditForm` (gained a new required `isPro` prop, threaded from `ItemDrawer` via a new `useSession()` call there, since the drawer previously had no session access) — both gated so the button only renders for Pro users, with accepted tags appended into the existing comma-separated Tags `Input` string; discovered and fixed a real bug during in-browser testing not caught by unit tests — OpenAI's `json_object` format mode rejects the request with a 400 unless the literal word "json" appears in the input text itself (not just conceptually implied by "JSON object" in the instructions), fixed by adding an explicit "Respond with json only" line to the model input; verified `npm run lint`, `npm test` (132 passing, 10 new covering validation/auth/Pro-gating/rate-limiting/both response-shape parsing/tag-capping/truncation/error-handling), and `npm run build` all pass, and in-browser via Playwright against the real OpenAI API (after the account's OpenAI credits were topped up mid-verification, since the first live attempt hit `insufficient_quota`) that: the Create Item dialog's Suggest Tags button returns real relevant suggestions from a title (e.g. "react", "custom hook", "fetch", "abort controller" for a "React useFetch hook with abort controller" snippet), individual accept/reject correctly moves a tag into the Tags field or discards it, a full create → verify round trip persisted all three accepted tags correctly on the created item; the Item Drawer's edit-mode Suggest Tags button (same item) correctly excluded exact-duplicate existing tags while still surfacing near-duplicate variants (e.g. "fetch-hook" alongside the existing "fetch") since dedup is exact-string-match by design; and the button is correctly hidden for free users in both the Create dialog and Drawer edit mode (verified by temporarily flipping the seeded demo user's `isPro` via Neon SQL, then restoring it to `true` afterward) — cleaned up the test item via the existing delete flow, confirming item/collection counts returned to their original seed values (see @context/features/ai-auto-tag-spec.md)
 - 2026-08-31 - Language Dropdown for Snippets/Commands completed: replaced the free-text Language `Input` with a `Select` dropdown (new shared `LanguageSelect` component, `src/components/dashboard/LanguageSelect.tsx`) in both the New Item dialog (`CreateItemDialog`) and the Item Drawer's edit mode (`ItemEditForm`); added `LANGUAGE_OPTIONS` to `src/lib/constants/item-types.ts` (~24 common languages, values matching `CodeEditor`'s existing Monaco language ids); the Language field was also moved above Content in both forms (previously below) so the language is picked before/while typing, working with `CodeEditor`'s existing live re-highlighting as `language` changes — no `CodeEditor`/Monaco changes needed; `LanguageSelect` normalizes the stored value to lowercase and injects it as an extra option when it isn't one of the known `LANGUAGE_OPTIONS`, so any legacy/custom language value on an existing item still displays correctly instead of silently clearing; fixed a TS build error from Base UI's `Select` `onValueChange` typing `value` as `string | null`; no schema/server-action changes (still stores/reads the same `language` string field), no unit tests apply (presentation-only, no new server-action/utility logic) — verified `npm run lint`, `npm test` (122 passing, unchanged), and `npm run build` all pass, and in-browser via Playwright (signed in as the seeded demo user) that: the New Item dialog's Language dropdown renders above Content for Snippet/Command types, selecting a language (e.g. Python) immediately re-highlights typed code, switching languages (Python → Go) live re-highlights existing content; created a real Snippet this way and confirmed the Item Drawer's Edit mode pre-selects the saved language correctly and content still highlights; and an existing seeded Command item (`bash`) opened in Edit mode correctly pre-selects "bash" in the dropdown with no regression — cleaned up the test item afterward via the existing delete flow
 - 2026-08-30 - Upgrade Page completed: new session-gated `/upgrade` page (`src/app/upgrade/page.tsx`, `auth()` + redirect to `/sign-in`, redirects Pro users to `/settings` via a fresh `getUserProfile` DB read rather than the possibly-stale JWT `isPro`) presents Free vs Pro pricing cards mirroring the homepage's `PricingSection` layout/copy but reworked with dashboard theme tokens (`bg-card`/`text-foreground`/`text-muted-foreground` instead of the marketing dark-only tokens); new `UpgradePricing` client component (`src/components/upgrade/UpgradePricing.tsx`) holds the monthly/yearly `Switch` toggle and calls the existing `createCheckoutSession(interval)` server action (from Stripe Phase 1/2) on click, redirecting to Stripe Checkout — no new billing/server logic, pure reuse; `DashboardTopBar` gained an "Upgrade" entry point (`Sparkles` icon, ghost-variant `Link` to `/upgrade`, visually subtler than the adjacent "New Collection"/"New Item" buttons), shown only when `!user.isPro`, with the same icon-only-below-`sm`/labeled-at-`sm:` responsive split already used by those other top-bar buttons; `DashboardTopBarUser` gained an optional `isPro` field (already threaded through from `DashboardShell`'s `ShellUser` → `DashboardPage`, no new data plumbing needed); no schema/server-action changes, no unit tests apply (presentation-only, `createCheckoutSession` already has coverage from Stripe Phase 1) — verified `npm run lint`, `npm test` (122 passing, unchanged), and `npm run build` all pass, and in-browser via Playwright (temporarily toggling the seeded demo user's `isPro` via Neon SQL, since it was already Pro from prior Stripe testing, then restoring it to its original `true` value afterward) that: the top-bar Upgrade button is hidden for the Pro demo user and appears correctly once flipped to free; `/upgrade` renders the Free/Pro cards with the toggle correctly switching $8/mo ↔ $72/yr and updating the button label; clicking "Upgrade to Pro — $72/yr" redirects to a real Stripe test-mode Checkout session showing the correct $72.00/year price; visiting `/upgrade` as a Pro user correctly redirects to `/settings`; and mobile (390px) shows the Upgrade control correctly collapsed to icon-only in the top bar (fixed a bug caught during this pass — two conditionally-mounted sibling `Link`s for the icon-only/labeled variants caused a hydration mismatch, fixed by using a single `Link` with a `hidden sm:inline` label `span` instead, matching how the rest of the codebase avoids this class of bug)
 - 2026-08-29 - Add Marketing Navbar to Sign In / Sign Up Pages completed: `/sign-in` and `/register` now render the homepage's `MarketingNavbar` instead of no header; both pages wrapped in the marketing dark theme (`bg-marketing-bg`) so the existing theme-aware `SignInForm`/`RegisterForm` card styling (`text-foreground`/`text-muted-foreground`/`text-destructive`, already dark-mode-first) reads correctly underneath it, with `pt-23` added to the centered content wrapper to clear the navbar's fixed 68px height; `MarketingNavbar` (`src/components/marketing/MarketingNavbar.tsx`) now uses `usePathname()` to point its Features/Pricing anchor links at `/#features`/`/#pricing` when not on `/`, and back to plain `#features`/`#pricing` on the homepage itself, applied to both the desktop nav and the mobile `Sheet` drawer; logo continues to link to `/`; no schema/server-action changes, no unit tests apply (presentation-only) — verified `npm run lint`, `npm test` (95 passing, unchanged), and `npm run build` all pass, and in-browser via Playwright that both pages render the navbar with no console errors, Features/Pricing links resolve to `/#features`/`/#pricing` while on `/register` and correctly revert to `#features`/`#pricing` on `/` with no regression, and the mobile hamburger menu (390px) opens correctly on `/sign-in` showing Features/Pricing/Sign In/Get Started
