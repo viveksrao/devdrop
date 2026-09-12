@@ -52,6 +52,94 @@ function parseTagsFromResponse(raw: string): string[] {
     .slice(0, MAX_SUGGESTED_TAGS);
 }
 
+const summarizeItemSchema = z.object({
+  title: z.string().trim().min(1, "Title is required"),
+  content: z.string().trim().optional(),
+  url: z.string().trim().optional(),
+});
+
+export type SummarizeItemPayload = z.infer<typeof summarizeItemSchema>;
+
+function parseSummaryFromResponse(raw: string): string {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return "";
+  }
+
+  if (typeof parsed === "string") {
+    return parsed.trim();
+  }
+
+  if (
+    parsed &&
+    typeof parsed === "object" &&
+    typeof (parsed as { summary?: unknown }).summary === "string"
+  ) {
+    return (parsed as { summary: string }).summary.trim();
+  }
+
+  return "";
+}
+
+export async function summarizeItem(
+  data: SummarizeItemPayload
+): Promise<ActionResult<{ summary: string }>> {
+  const parsed = summarizeItemSchema.safeParse(data);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message };
+  }
+
+  const session = await auth();
+  if (!session?.user) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  if (!session.user.isPro) {
+    return { success: false, error: "AI features require DevDrop Pro" };
+  }
+
+  const ip = getClientIpFromHeaders(await headers());
+  const rateLimit = await checkRateLimit("ai-summarize", `${ip}:${session.user.id}`);
+  if (!rateLimit.success) {
+    return { success: false, error: "Too many AI requests. Please try again shortly." };
+  }
+
+  const { title, content, url } = parsed.data;
+  const truncatedContent = content?.slice(0, MAX_CONTENT_LENGTH) ?? "";
+
+  try {
+    const response = await openai.responses.create({
+      model: AI_MODEL,
+      instructions:
+        "You write concise, 1 to 2 sentence summaries for developer knowledge-base items " +
+        "(snippets, prompts, commands, notes, links, files, images). Always respond with json, " +
+        `returning the summary as a json object shaped like {"summary": "..."}. The summary ` +
+        "should describe what the item is and what it's for, based only on the given title, " +
+        "content, and/or URL. If content is empty, base the summary on the title alone.",
+      input:
+        `Title: ${title}\n\n` +
+        (truncatedContent ? `Content:\n${truncatedContent}\n\n` : "") +
+        (url ? `URL: ${url}\n\n` : "") +
+        "Respond with json only.",
+      text: {
+        format: { type: "json_object" },
+      },
+    });
+
+    const summary = parseSummaryFromResponse(response.output_text ?? "");
+
+    return { success: true, data: { summary } };
+  } catch (error) {
+    console.error("Failed to summarize item:", error);
+    if (error instanceof OpenAI.APIError && error.status === 429) {
+      return { success: false, error: "AI is busy right now — try again in a moment." };
+    }
+    return { success: false, error: "AI summary failed. Please try again." };
+  }
+}
+
 export async function generateAutoTags(
   data: GenerateAutoTagsPayload
 ): Promise<ActionResult<{ tags: string[] }>> {

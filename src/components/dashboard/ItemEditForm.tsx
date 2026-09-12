@@ -5,6 +5,7 @@ import { ItemContentField } from "@/components/dashboard/ItemContentField";
 import { CollectionPicker } from "@/components/dashboard/CollectionPicker";
 import { LanguageSelect } from "@/components/dashboard/LanguageSelect";
 import { TagSuggestions } from "@/components/dashboard/TagSuggestions";
+import { SummarizeButton } from "@/components/dashboard/SummarizeButton";
 import { TEXT_CONTENT_TYPES, LANGUAGE_TYPES } from "@/lib/constants/item-types";
 import type { ItemDetail } from "@/lib/db/items";
 import type { CollectionOption } from "@/lib/db/collections";
@@ -61,6 +62,14 @@ export function ItemEditForm({
           value={form.description}
           onChange={(e) => onChange({ ...form, description: e.target.value })}
         />
+        {isPro && (
+          <SummarizeButton
+            title={form.title}
+            content={form.content}
+            url={form.url}
+            onSummary={(summary) => onChange({ ...form, description: summary })}
+          />
+        )}
       </div>
 
       {LANGUAGE_TYPES.has(itemType.name) && (

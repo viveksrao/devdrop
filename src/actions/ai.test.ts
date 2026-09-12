@@ -22,7 +22,7 @@ vi.mock("next/headers", () => ({
   headers: async () => ({ get: mockHeadersGet }),
 }));
 
-const { generateAutoTags } = await import("./ai");
+const { generateAutoTags, summarizeItem } = await import("./ai");
 
 beforeEach(() => {
   mockAuth.mockReset();
@@ -136,6 +136,131 @@ describe("generateAutoTags", () => {
     expect(result).toEqual({
       success: false,
       error: "AI suggestion failed. Please try again.",
+    });
+  });
+});
+
+describe("summarizeItem", () => {
+  it("rejects a missing title", async () => {
+    const result = await summarizeItem({ title: "  ", content: "some content" });
+
+    expect(result).toEqual({ success: false, error: "Title is required" });
+    expect(mockAuth).not.toHaveBeenCalled();
+  });
+
+  it("rejects unauthenticated requests", async () => {
+    mockAuth.mockResolvedValueOnce(null);
+
+    const result = await summarizeItem({ title: "My snippet" });
+
+    expect(result).toEqual({ success: false, error: "Unauthorized" });
+    expect(mockResponsesCreate).not.toHaveBeenCalled();
+  });
+
+  it("rejects free (non-Pro) users", async () => {
+    mockAuth.mockResolvedValueOnce({ user: { id: "user-1", isPro: false } });
+
+    const result = await summarizeItem({ title: "My snippet" });
+
+    expect(result).toEqual({ success: false, error: "AI features require DevDrop Pro" });
+    expect(mockResponsesCreate).not.toHaveBeenCalled();
+  });
+
+  it("returns a rate-limit error when the limit is exceeded", async () => {
+    mockAuth.mockResolvedValueOnce({ user: { id: "user-1", isPro: true } });
+    mockCheckRateLimit.mockResolvedValueOnce({ success: false, remaining: 0, reset: 0 });
+
+    const result = await summarizeItem({ title: "My snippet" });
+
+    expect(result).toEqual({
+      success: false,
+      error: "Too many AI requests. Please try again shortly.",
+    });
+    expect(mockResponsesCreate).not.toHaveBeenCalled();
+  });
+
+  it("parses a summary from a {summary: ...} JSON response", async () => {
+    mockAuth.mockResolvedValueOnce({ user: { id: "user-1", isPro: true } });
+    mockResponsesCreate.mockResolvedValueOnce({
+      output_text: JSON.stringify({ summary: "A hook for fetching data with cleanup." }),
+    });
+
+    const result = await summarizeItem({ title: "useFetch hook", content: "some code" });
+
+    expect(result).toEqual({
+      success: true,
+      data: { summary: "A hook for fetching data with cleanup." },
+    });
+  });
+
+  it("parses a summary from a bare JSON string response", async () => {
+    mockAuth.mockResolvedValueOnce({ user: { id: "user-1", isPro: true } });
+    mockResponsesCreate.mockResolvedValueOnce({
+      output_text: JSON.stringify("A short summary."),
+    });
+
+    const result = await summarizeItem({ title: "A script" });
+
+    expect(result).toEqual({ success: true, data: { summary: "A short summary." } });
+  });
+
+  it("returns an empty summary when the response is unparseable", async () => {
+    mockAuth.mockResolvedValueOnce({ user: { id: "user-1", isPro: true } });
+    mockResponsesCreate.mockResolvedValueOnce({ output_text: "not json" });
+
+    const result = await summarizeItem({ title: "Something" });
+
+    expect(result).toEqual({ success: true, data: { summary: "" } });
+  });
+
+  it("truncates content to 2000 chars before calling the model", async () => {
+    mockAuth.mockResolvedValueOnce({ user: { id: "user-1", isPro: true } });
+    mockResponsesCreate.mockResolvedValueOnce({
+      output_text: JSON.stringify({ summary: "" }),
+    });
+
+    const longContent = "x".repeat(5000);
+    await summarizeItem({ title: "Something", content: longContent });
+
+    const call = mockResponsesCreate.mock.calls[0][0];
+    expect(call.input).toContain("x".repeat(2000));
+    expect(call.input).not.toContain("x".repeat(2001));
+  });
+
+  it("includes the URL in the prompt when provided", async () => {
+    mockAuth.mockResolvedValueOnce({ user: { id: "user-1", isPro: true } });
+    mockResponsesCreate.mockResolvedValueOnce({
+      output_text: JSON.stringify({ summary: "" }),
+    });
+
+    await summarizeItem({ title: "A link", url: "https://example.com" });
+
+    const call = mockResponsesCreate.mock.calls[0][0];
+    expect(call.input).toContain("https://example.com");
+  });
+
+  it("summarizes from title alone when content is absent", async () => {
+    mockAuth.mockResolvedValueOnce({ user: { id: "user-1", isPro: true } });
+    mockResponsesCreate.mockResolvedValueOnce({
+      output_text: JSON.stringify({ summary: "" }),
+    });
+
+    await summarizeItem({ title: "Just a title" });
+
+    const call = mockResponsesCreate.mock.calls[0][0];
+    expect(call.input).toContain("Just a title");
+    expect(call.input).not.toContain("Content:");
+  });
+
+  it("catches unexpected errors and returns a generic message", async () => {
+    mockAuth.mockResolvedValueOnce({ user: { id: "user-1", isPro: true } });
+    mockResponsesCreate.mockRejectedValueOnce(new Error("network down"));
+
+    const result = await summarizeItem({ title: "Something" });
+
+    expect(result).toEqual({
+      success: false,
+      error: "AI summary failed. Please try again.",
     });
   });
 });

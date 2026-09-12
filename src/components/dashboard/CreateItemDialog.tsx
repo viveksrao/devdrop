@@ -21,6 +21,7 @@ import { FileUpload, type UploadedFile } from "@/components/dashboard/FileUpload
 import { CollectionPicker } from "@/components/dashboard/CollectionPicker";
 import { LanguageSelect } from "@/components/dashboard/LanguageSelect";
 import { TagSuggestions } from "@/components/dashboard/TagSuggestions";
+import { SummarizeButton } from "@/components/dashboard/SummarizeButton";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import {
@@ -197,6 +198,14 @@ export function CreateItemDialog({ open, onOpenChange, collections }: CreateItem
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
             />
+            {isPro && (
+              <SummarizeButton
+                title={form.title}
+                content={form.content}
+                url={form.url}
+                onSummary={(summary) => setForm({ ...form, description: summary })}
+              />
+            )}
           </div>
 
           {LANGUAGE_TYPES.has(itemTypeName) && (

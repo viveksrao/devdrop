@@ -1,10 +1,32 @@
-# Current Feature
+# Current Feature: AI Summary
 
 ## Status
 
+In Progress
+
 ## Goals
 
+- Add `summarizeItem` server action (`src/actions/ai.ts`) — auth, Pro gating, Zod validation (title required, content optional), rate limiting, mirroring `generateAutoTags`
+- Add a new `ai-summarize` rate limit config (20 requests/hour per user) to `src/lib/rate-limit.ts`
+- Use the OpenAI Responses API (`openai.responses.create`), not Chat Completions
+- Truncate content to 2000 chars before the API call
+- Support all item types — build the prompt from whatever title/content/url is currently in the form (no content for file/image, so summarize from title alone)
+- Add a "Summarize" icon button (Sparkles, ghost variant) next to the Description field in the Create Item dialog and Item Drawer edit mode
+- On click, populate/replace the Description field directly with the returned summary — no accept/reject UI (differs from Suggest Tags)
+- Hide the Summarize button for free users (Pro-only UI gating), reusing existing `isPro` plumbing
+- Loading state: disable button + change label while awaiting response
+- Error handling via toast (Pro gating, rate limit, AI service errors)
+- Follow existing patterns; keep as a separate component from `TagSuggestions`
+- Unit tests for the new server action
+
 ## Notes
+
+- `OPENAI_API_KEY`, `src/lib/openai.ts`, and `AI_MODEL` already exist from the AI Auto-Tagging feature — no new client setup needed
+- `isPro` is already threaded through `CreateItemDialog` (via `useSession()`) and `ItemDrawer` → `ItemEditForm` (prop) — reuse both
+- Reuse the `json_object` response-format fix from Suggest Tags: the literal word "json" must appear in the input text for `text.format: { type: "json_object" }` to work
+- Suggested response shape: `{ "summary": "..." }`, parsed defensively (handle both a JSON object and a bare string)
+- See `docs/ai-integration-plan.md` §7 for the UI precedent (summary populates Description directly, no accept/reject) and §2/§4/§5 for the action/rate-limit/Pro-gating shape
+- Full spec: @context/features/ai-summary-spec.md
 
 ## History
 
