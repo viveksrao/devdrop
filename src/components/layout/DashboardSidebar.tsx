@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   ChevronLeft,
   ChevronRight,
@@ -52,6 +53,8 @@ export function DashboardSidebar({
   recentCollections,
   user,
 }: DashboardSidebarProps) {
+  const pathname = usePathname();
+
   return (
     <aside
       className={cn(
@@ -80,14 +83,17 @@ export function DashboardSidebar({
             const label = ITEM_TYPE_LABELS[type.name] ?? type.name;
             const isPro = PRO_ONLY_TYPES.has(type.name);
 
+            const href = `/items/${type.name}s`;
+
             return (
               <SidebarLink
                 key={type.id}
-                href={`/items/${type.name}s`}
+                href={href}
                 icon={Icon}
                 label={label}
                 iconColor={type.color}
                 collapsed={collapsed}
+                isActive={pathname === href}
                 badge={isPro ? "PRO" : undefined}
                 trailing={
                   <span className="text-xs text-muted-foreground">
@@ -112,34 +118,40 @@ export function DashboardSidebar({
             )
           }
         >
-          {recentCollections.map((collection) => (
-            <SidebarLink
-              key={collection.id}
-              href={`/collections/${collection.id}`}
-              iconNode={
-                <span className="flex size-4 shrink-0 items-center justify-center">
-                  <span
-                    className="size-2.5 rounded-full"
-                    style={{
-                      backgroundColor: collection.dominantColor ?? "var(--muted-foreground)",
-                    }}
-                  />
-                </span>
-              }
-              label={collection.name}
-              collapsed={collapsed}
-              trailing={
-                collection.isFavorite ? (
-                  <Star className="size-3.5 fill-current text-yellow-400" />
-                ) : undefined
-              }
-            />
-          ))}
+          {recentCollections.map((collection) => {
+            const href = `/collections/${collection.id}`;
+
+            return (
+              <SidebarLink
+                key={collection.id}
+                href={href}
+                iconNode={
+                  <span className="flex size-4 shrink-0 items-center justify-center">
+                    <span
+                      className="size-2.5 rounded-full"
+                      style={{
+                        backgroundColor: collection.dominantColor ?? "var(--muted-foreground)",
+                      }}
+                    />
+                  </span>
+                }
+                label={collection.name}
+                collapsed={collapsed}
+                isActive={pathname === href}
+                trailing={
+                  collection.isFavorite ? (
+                    <Star className="size-3.5 fill-current text-yellow-400" />
+                  ) : undefined
+                }
+              />
+            );
+          })}
           <SidebarLink
             href="/collections"
             icon={Layers}
             label="View all collections"
             collapsed={collapsed}
+            isActive={pathname === "/collections"}
           />
         </SidebarSection>
       </div>
@@ -203,6 +215,7 @@ interface SidebarLinkProps {
   label: string;
   iconColor?: string;
   collapsed: boolean;
+  isActive?: boolean;
   badge?: string;
   trailing?: React.ReactNode;
 }
@@ -214,6 +227,7 @@ function SidebarLink({
   label,
   iconColor,
   collapsed,
+  isActive,
   badge,
   trailing,
 }: SidebarLinkProps) {
@@ -221,9 +235,11 @@ function SidebarLink({
     <Link
       href={href}
       aria-label={collapsed ? label : undefined}
+      aria-current={isActive ? "page" : undefined}
       className={cn(
         "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-foreground/90 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-        collapsed && "justify-center px-0"
+        collapsed && "justify-center px-0",
+        isActive && "bg-sidebar-accent font-medium text-sidebar-accent-foreground"
       )}
     >
       {iconNode ?? (
