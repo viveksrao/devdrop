@@ -73,11 +73,15 @@ export async function checkRateLimit(
 }
 
 export function getClientIp(request: Request): string {
-  const forwardedFor = request.headers.get("x-forwarded-for");
+  return getClientIpFromHeaderList(request.headers);
+}
+
+export function getClientIpFromHeaderList(headerList: Headers): string {
+  const forwardedFor = headerList.get("x-forwarded-for");
   if (forwardedFor) {
     return forwardedFor.split(",")[0].trim();
   }
-  return request.headers.get("x-real-ip") ?? "unknown";
+  return headerList.get("x-real-ip") ?? "unknown";
 }
 
 export function rateLimitResponse(reset: number): Response {

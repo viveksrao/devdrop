@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { auth } from "@/auth";
+import { requireSession } from "@/lib/auth-helpers";
 import {
   updateItem as updateItemInDb,
   deleteItem as deleteItemInDb,
@@ -84,9 +84,9 @@ export async function updateItem(
     return { success: false, error: parsed.error.issues[0].message };
   }
 
-  const session = await auth();
-  if (!session?.user) {
-    return { success: false, error: "Unauthorized" };
+  const { session, error } = await requireSession();
+  if (!session) {
+    return { success: false, error };
   }
 
   try {
@@ -121,9 +121,9 @@ export async function createItem(
     return { success: false, error: parsed.error.issues[0].message };
   }
 
-  const session = await auth();
-  if (!session?.user) {
-    return { success: false, error: "Unauthorized" };
+  const { session, error } = await requireSession();
+  if (!session) {
+    return { success: false, error };
   }
 
   if (PRO_ONLY_TYPES.has(parsed.data.itemTypeName) && !session.user.isPro) {
@@ -182,9 +182,9 @@ export async function createItem(
 }
 
 export async function toggleItemFavorite(itemId: string): Promise<ActionResult<ItemDetail>> {
-  const session = await auth();
-  if (!session?.user) {
-    return { success: false, error: "Unauthorized" };
+  const { session, error } = await requireSession();
+  if (!session) {
+    return { success: false, error };
   }
 
   try {
@@ -202,9 +202,9 @@ export async function toggleItemFavorite(itemId: string): Promise<ActionResult<I
 }
 
 export async function toggleItemPin(itemId: string): Promise<ActionResult<ItemDetail>> {
-  const session = await auth();
-  if (!session?.user) {
-    return { success: false, error: "Unauthorized" };
+  const { session, error } = await requireSession();
+  if (!session) {
+    return { success: false, error };
   }
 
   try {
@@ -222,9 +222,9 @@ export async function toggleItemPin(itemId: string): Promise<ActionResult<ItemDe
 }
 
 export async function deleteItem(itemId: string): Promise<ActionResult<null>> {
-  const session = await auth();
-  if (!session?.user) {
-    return { success: false, error: "Unauthorized" };
+  const { session, error } = await requireSession();
+  if (!session) {
+    return { success: false, error };
   }
 
   try {

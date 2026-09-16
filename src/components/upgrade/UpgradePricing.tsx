@@ -1,48 +1,14 @@
 "use client";
 
-import { useState } from "react";
-import { toast } from "sonner";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { createCheckoutSession } from "@/actions/billing";
-import type { BillingInterval } from "@/lib/stripe";
+import { useUpgradeCheckout } from "@/hooks/useUpgradeCheckout";
+import { PLAN_FEATURES } from "@/lib/constants/plan-limits";
 import { cn } from "@/lib/utils";
 
-const FREE_FEATURES = [
-  "50 items total",
-  "3 collections",
-  "Snippets, Prompts, Commands, Notes, Links",
-  "Basic search",
-];
-
-const PRO_FEATURES = [
-  "Unlimited items",
-  "Unlimited collections",
-  "File & image uploads",
-  "AI auto-tagging & summaries",
-  "AI code explanation & prompt optimizer",
-  "Data export (JSON/ZIP)",
-  "Priority support",
-];
-
 export function UpgradePricing() {
-  const [isYearly, setIsYearly] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  async function handleUpgrade() {
-    setIsSubmitting(true);
-    const interval: BillingInterval = isYearly ? "yearly" : "monthly";
-    const result = await createCheckoutSession(interval);
-    setIsSubmitting(false);
-
-    if (!result.success || !result.data) {
-      toast.error(result.error ?? "Failed to start checkout");
-      return;
-    }
-
-    window.location.href = result.data.url;
-  }
+  const { isYearly, setIsYearly, isSubmitting, handleUpgrade } = useUpgradeCheckout();
 
   return (
     <div className="flex flex-col items-center gap-10">
@@ -68,7 +34,7 @@ export function UpgradePricing() {
           </p>
           <p className="mb-6 text-sm text-muted-foreground">Your current plan.</p>
           <ul className="flex flex-col gap-3">
-            {FREE_FEATURES.map((feature) => (
+            {PLAN_FEATURES.free.map((feature) => (
               <li key={feature} className="flex items-start gap-2 text-[0.88rem] text-muted-foreground">
                 <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-green-600 dark:text-green-500" />
                 {feature}
@@ -92,7 +58,7 @@ export function UpgradePricing() {
             For developers who never want to lose a snippet again.
           </p>
           <ul className="mb-7 flex flex-col gap-3">
-            {PRO_FEATURES.map((feature) => (
+            {PLAN_FEATURES.pro.map((feature) => (
               <li key={feature} className="flex items-start gap-2 text-[0.88rem] text-muted-foreground">
                 <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-green-600 dark:text-green-500" />
                 {feature}

@@ -17,6 +17,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { deleteJson } from "@/lib/api-client";
 
 const CONFIRM_TEXT = "DELETE";
 
@@ -27,8 +28,7 @@ export function DeleteAccountDialog() {
   async function handleDelete() {
     setIsDeleting(true);
 
-    const res = await fetch("/api/auth/delete-account", { method: "DELETE" });
-    const json = await res.json();
+    const { json } = await deleteJson("/api/auth/delete-account");
 
     if (!json.success) {
       setIsDeleting(false);

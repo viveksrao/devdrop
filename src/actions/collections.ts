@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { auth } from "@/auth";
+import { requireSession } from "@/lib/auth-helpers";
 import {
   createCollection as createCollectionInDb,
   updateCollection as updateCollectionInDb,
@@ -39,9 +39,9 @@ export async function createCollection(
     return { success: false, error: parsed.error.issues[0].message };
   }
 
-  const session = await auth();
-  if (!session?.user) {
-    return { success: false, error: "Unauthorized" };
+  const { session, error } = await requireSession();
+  if (!session) {
+    return { success: false, error };
   }
 
   if (!(await canCreateCollection(session.user.id, session.user.isPro))) {
@@ -72,9 +72,9 @@ export async function updateCollection(
     return { success: false, error: parsed.error.issues[0].message };
   }
 
-  const session = await auth();
-  if (!session?.user) {
-    return { success: false, error: "Unauthorized" };
+  const { session, error } = await requireSession();
+  if (!session) {
+    return { success: false, error };
   }
 
   try {
@@ -99,9 +99,9 @@ export async function updateCollection(
 export async function toggleCollectionFavorite(
   collectionId: string
 ): Promise<ActionResult<CollectionWithStats>> {
-  const session = await auth();
-  if (!session?.user) {
-    return { success: false, error: "Unauthorized" };
+  const { session, error } = await requireSession();
+  if (!session) {
+    return { success: false, error };
   }
 
   try {
@@ -119,9 +119,9 @@ export async function toggleCollectionFavorite(
 }
 
 export async function deleteCollection(collectionId: string): Promise<ActionResult<null>> {
-  const session = await auth();
-  if (!session?.user) {
-    return { success: false, error: "Unauthorized" };
+  const { session, error } = await requireSession();
+  if (!session) {
+    return { success: false, error };
   }
 
   try {

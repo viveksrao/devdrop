@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Check, Copy, Pin, Star } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,7 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ITEM_TYPE_ICONS, ITEM_TYPE_LABELS } from "@/lib/constants/item-types";
 import { useItemDrawer } from "@/components/dashboard/ItemDrawerProvider";
-import { toggleItemFavorite } from "@/actions/items";
+import { useToggleItemFavorite } from "@/hooks/useToggleItemFavorite";
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import type { ItemDetail, ItemWithType } from "@/lib/db/items";
 
 interface ItemCardProps {
@@ -21,25 +21,10 @@ export function ItemCard({ item }: ItemCardProps) {
   const Icon = ITEM_TYPE_ICONS[itemType.name];
   const label = ITEM_TYPE_LABELS[itemType.name] ?? itemType.name;
   const { openItem } = useItemDrawer();
-  const router = useRouter();
-  const [copied, setCopied] = useState(false);
+  const { copied, copy } = useCopyToClipboard();
   const [copying, setCopying] = useState(false);
-  const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
-
-  async function handleToggleFavorite(e: React.MouseEvent) {
-    e.stopPropagation();
-    if (isTogglingFavorite) return;
-    setIsTogglingFavorite(true);
-    const result = await toggleItemFavorite(item.id);
-    setIsTogglingFavorite(false);
-
-    if (!result.success) {
-      toast.error(result.error ?? "Failed to update favorite");
-      return;
-    }
-
-    router.refresh();
-  }
+  const { isToggling: isTogglingFavorite, toggleFavorite: handleToggleFavorite } =
+    useToggleItemFavorite(item.id);
 
   async function handleCopy(e: React.MouseEvent) {
     e.stopPropagation();
@@ -55,9 +40,7 @@ export function ItemCard({ item }: ItemCardProps) {
       if (!value) {
         throw new Error("Nothing to copy");
       }
-      await navigator.clipboard.writeText(value);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
+      await copy(value);
     } catch {
       toast.error("Failed to copy");
     } finally {

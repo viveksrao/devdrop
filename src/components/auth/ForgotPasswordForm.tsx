@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { postJson } from "@/lib/api-client";
 
 const forgotPasswordSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -29,16 +30,11 @@ export function ForgotPasswordForm() {
 
     setIsSubmitting(true);
 
-    const res = await fetch("/api/auth/forgot-password", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(parsed.data),
-    });
+    const { status, json } = await postJson("/api/auth/forgot-password", parsed.data);
 
     setIsSubmitting(false);
 
-    if (res.status === 429) {
-      const json = await res.json();
+    if (status === 429) {
       toast.error(json.error ?? "Too many attempts. Please try again later.");
       return;
     }
