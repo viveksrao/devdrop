@@ -1,10 +1,10 @@
 "use server";
 
 import { headers } from "next/headers";
-import { auth } from "@/auth";
+import { requireSession } from "@/lib/auth-helpers";
 import { stripe, STRIPE_PRICE_IDS, type BillingInterval } from "@/lib/stripe";
 import { getUserBillingInfo, setUserStripeCustomerId } from "@/lib/db/billing";
-import { checkRateLimit } from "@/lib/rate-limit";
+import { checkRateLimit, getClientIpFromHeaderList } from "@/lib/rate-limit";
 
 interface ActionResult<T> {
   success: boolean;
@@ -14,23 +14,15 @@ interface ActionResult<T> {
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
-function getClientIpFromHeaders(headerList: Awaited<ReturnType<typeof headers>>): string {
-  const forwardedFor = headerList.get("x-forwarded-for");
-  if (forwardedFor) {
-    return forwardedFor.split(",")[0].trim();
-  }
-  return headerList.get("x-real-ip") ?? "unknown";
-}
-
 export async function createCheckoutSession(
   interval: BillingInterval
 ): Promise<ActionResult<{ url: string }>> {
-  const session = await auth();
-  if (!session?.user) {
-    return { success: false, error: "Unauthorized" };
+  const { session, error } = await requireSession();
+  if (!session) {
+    return { success: false, error };
   }
 
-  const ip = getClientIpFromHeaders(await headers());
+  const ip = getClientIpFromHeaderList(await headers());
   const rateLimit = await checkRateLimit("checkout", `${ip}:${session.user.id}`);
   if (!rateLimit.success) {
     return { success: false, error: "Too many attempts. Please try again shortly." };
@@ -73,9 +65,9 @@ export async function createCheckoutSession(
 }
 
 export async function createBillingPortalSession(): Promise<ActionResult<{ url: string }>> {
-  const session = await auth();
-  if (!session?.user) {
-    return { success: false, error: "Unauthorized" };
+  const { session, error } = await requireSession();
+  if (!session) {
+    return { success: false, error };
   }
 
   try {

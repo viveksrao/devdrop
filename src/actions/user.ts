@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { auth } from "@/auth";
+import { requireSession } from "@/lib/auth-helpers";
 import { updateEditorPreferences as updateEditorPreferencesInDb } from "@/lib/db/user";
 import { EDITOR_THEMES, FONT_SIZES, TAB_SIZES } from "@/lib/constants/editor-preferences";
 import type { EditorPreferences } from "@/lib/constants/editor-preferences";
@@ -28,9 +28,9 @@ export async function updateEditorPreferences(
     return { success: false, error: parsed.error.issues[0].message };
   }
 
-  const session = await auth();
-  if (!session?.user) {
-    return { success: false, error: "Unauthorized" };
+  const { session, error } = await requireSession();
+  if (!session) {
+    return { success: false, error };
   }
 
   try {

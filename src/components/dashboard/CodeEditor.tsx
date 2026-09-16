@@ -6,11 +6,13 @@ import type { BeforeMount, OnMount } from "@monaco-editor/react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { toast } from "sonner";
-import { Check, Copy, Crown, Loader2, Sparkles } from "lucide-react";
+import { Check, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { useEditorPreferences } from "@/components/dashboard/EditorPreferencesProvider";
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
+import { EditorTabButton } from "@/components/dashboard/EditorTabButton";
+import { AiActionButton } from "@/components/dashboard/AiActionButton";
 import { explainCode } from "@/actions/ai";
 
 const Editor = dynamic(() => import("@monaco-editor/react"), {
@@ -86,7 +88,7 @@ export function CodeEditor({
   isPro = false,
 }: CodeEditorProps) {
   const [height, setHeight] = useState(MIN_HEIGHT);
-  const [copied, setCopied] = useState(false);
+  const { copied, copy } = useCopyToClipboard();
   const [tab, setTab] = useState<CodeEditorTab>("code");
   const [isExplaining, setIsExplaining] = useState(false);
   const [explanation, setExplanation] = useState<string | null>(null);
@@ -101,12 +103,6 @@ export function CodeEditor({
     };
     editor.onDidContentSizeChange(updateHeight);
     updateHeight();
-  }
-
-  async function handleCopy() {
-    await navigator.clipboard.writeText(value);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
   }
 
   async function handleExplain() {
@@ -147,13 +143,13 @@ export function CodeEditor({
       <div className="flex items-center justify-between border-b border-white/10 bg-[#2a2a2a] px-3 py-2">
         {canExplain ? (
           <div className="flex items-center gap-1">
-            <TabButton active={tab === "code"} onClick={() => setTab("code")}>
+            <EditorTabButton active={tab === "code"} onClick={() => setTab("code")}>
               Code
-            </TabButton>
+            </EditorTabButton>
             {explanation !== null && (
-              <TabButton active={tab === "explain"} onClick={() => setTab("explain")}>
+              <EditorTabButton active={tab === "explain"} onClick={() => setTab("explain")}>
                 Explain
-              </TabButton>
+              </EditorTabButton>
             )}
           </div>
         ) : (
@@ -168,36 +164,14 @@ export function CodeEditor({
             <span className="text-xs text-white/50">{language}</span>
           )}
           {canExplain && (
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-xs"
-                    className="text-white/60 hover:bg-white/10 hover:text-white"
-                    onClick={handleExplain}
-                    disabled={isExplaining}
-                  >
-                    {isExplaining ? (
-                      <Loader2 className="animate-spin" />
-                    ) : !isPro ? (
-                      <Crown />
-                    ) : (
-                      <Sparkles />
-                    )}
-                  </Button>
-                }
-              />
-              {!isPro && <TooltipContent>AI features require Pro subscription</TooltipContent>}
-            </Tooltip>
+            <AiActionButton isPro={isPro} isLoading={isExplaining} onClick={handleExplain} />
           )}
           <Button
             type="button"
             variant="ghost"
             size="icon-xs"
             className="text-white/60 hover:bg-white/10 hover:text-white"
-            onClick={handleCopy}
+            onClick={() => copy(value)}
           >
             {copied ? <Check className="text-emerald-400" /> : <Copy />}
           </Button>
@@ -250,31 +224,6 @@ export function CodeEditor({
         />
       )}
     </div>
-  );
-}
-
-function TabButton({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "rounded-md px-2 py-1 text-xs font-medium transition-colors",
-        active
-          ? "bg-white/10 text-white"
-          : "text-white/50 hover:text-white/80"
-      )}
-    >
-      {children}
-    </button>
   );
 }
 

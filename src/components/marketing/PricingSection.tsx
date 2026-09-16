@@ -7,18 +7,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { ScrollFadeIn } from "@/components/marketing/ScrollFadeIn";
-
-const FREE_FEATURES = ["50 items total", "3 collections", "Snippets, Prompts, Commands, Notes, Links", "Basic search"];
-
-const PRO_FEATURES = [
-  "Unlimited items",
-  "Unlimited collections",
-  "File & image uploads",
-  "AI auto-tagging & summaries",
-  "AI code explanation & prompt optimizer",
-  "Data export (JSON/ZIP)",
-  "Priority support",
-];
+import { PLAN_FEATURES } from "@/lib/constants/plan-limits";
 
 export function PricingSection() {
   const [isYearly, setIsYearly] = useState(false);
@@ -58,7 +47,7 @@ export function PricingSection() {
             </p>
             <p className="mb-6 text-sm text-marketing-text-muted">For getting your knowledge out of your head.</p>
             <ul className="mb-7 flex flex-col gap-3">
-              {FREE_FEATURES.map((feature) => (
+              {PLAN_FEATURES.free.map((feature) => (
                 <li key={feature} className="flex items-start gap-2 text-[0.88rem] text-marketing-text-muted">
                   <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-green-500" />
                   {feature}
@@ -85,7 +74,7 @@ export function PricingSection() {
               For developers who never want to lose a snippet again.
             </p>
             <ul className="mb-7 flex flex-col gap-3">
-              {PRO_FEATURES.map((feature) => (
+              {PLAN_FEATURES.pro.map((feature) => (
                 <li key={feature} className="flex items-start gap-2 text-[0.88rem] text-marketing-text-muted">
                   <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-green-500" />
                   {feature}

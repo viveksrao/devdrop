@@ -1,39 +1,25 @@
 "use client";
 
-import { useState } from "react";
 import { toast } from "sonner";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { createCheckoutSession, createBillingPortalSession } from "@/actions/billing";
-import type { BillingInterval } from "@/lib/stripe";
+import { createBillingPortalSession } from "@/actions/billing";
+import { useUpgradeCheckout } from "@/hooks/useUpgradeCheckout";
 
 interface BillingSectionProps {
   isPro: boolean;
 }
 
 export function BillingSection({ isPro }: BillingSectionProps) {
-  const [isYearly, setIsYearly] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  async function handleUpgrade() {
-    setIsSubmitting(true);
-    const interval: BillingInterval = isYearly ? "yearly" : "monthly";
-    const result = await createCheckoutSession(interval);
-    setIsSubmitting(false);
-
-    if (!result.success || !result.data) {
-      toast.error(result.error ?? "Failed to start checkout");
-      return;
-    }
-
-    window.location.href = result.data.url;
-  }
+  const { isYearly, setIsYearly, isSubmitting, handleUpgrade } = useUpgradeCheckout();
+  const [isManaging, setIsManaging] = useState(false);
 
   async function handleManageSubscription() {
-    setIsSubmitting(true);
+    setIsManaging(true);
     const result = await createBillingPortalSession();
-    setIsSubmitting(false);
+    setIsManaging(false);
 
     if (!result.success || !result.data) {
       toast.error(result.error ?? "Failed to open billing portal");
@@ -50,8 +36,8 @@ export function BillingSection({ isPro }: BillingSectionProps) {
           <span className="text-sm text-muted-foreground">Current plan</span>
           <Badge>Pro</Badge>
         </div>
-        <Button onClick={handleManageSubscription} disabled={isSubmitting} className="w-fit">
-          {isSubmitting ? "Loading…" : "Manage subscription"}
+        <Button onClick={handleManageSubscription} disabled={isManaging} className="w-fit">
+          {isManaging ? "Loading…" : "Manage subscription"}
         </Button>
       </div>
     );

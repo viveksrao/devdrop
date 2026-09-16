@@ -18,6 +18,10 @@ vi.mock("@/lib/db/billing", () => ({
 
 vi.mock("@/lib/rate-limit", () => ({
   checkRateLimit: mockCheckRateLimit,
+  getClientIpFromHeaderList: (headerList: { get: (name: string) => string | null }) =>
+    headerList.get("x-forwarded-for")?.split(",")[0].trim() ??
+    headerList.get("x-real-ip") ??
+    "unknown",
 }));
 
 vi.mock("@/lib/stripe", () => ({

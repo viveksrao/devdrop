@@ -4,10 +4,12 @@ import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { toast } from "sonner";
-import { Check, Copy, Crown, Loader2, Sparkles } from "lucide-react";
+import { Check, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
+import { EditorTabButton } from "@/components/dashboard/EditorTabButton";
+import { AiActionButton } from "@/components/dashboard/AiActionButton";
 import { optimizePrompt } from "@/actions/ai";
 
 const MAX_HEIGHT = 400;
@@ -37,17 +39,11 @@ export function MarkdownEditor({
   enableOptimize = false,
 }: MarkdownEditorProps) {
   const [tab, setTab] = useState<MarkdownTab>(readOnly ? "preview" : "write");
-  const [copied, setCopied] = useState(false);
+  const { copied, copy } = useCopyToClipboard();
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [optimizedPrompt, setOptimizedPrompt] = useState<string | null>(null);
 
   const canOptimize = enableOptimize && !readOnly && Boolean(title);
-
-  async function handleCopy() {
-    await navigator.clipboard.writeText(value);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
-  }
 
   async function handleOptimize() {
     if (!isPro) {
@@ -98,51 +94,29 @@ export function MarkdownEditor({
           <span className="text-xs font-medium text-white/70">Preview</span>
         ) : (
           <div className="flex items-center gap-1">
-            <TabButton active={tab === "write"} onClick={() => setTab("write")}>
+            <EditorTabButton active={tab === "write"} onClick={() => setTab("write")}>
               Write
-            </TabButton>
-            <TabButton active={tab === "preview"} onClick={() => setTab("preview")}>
+            </EditorTabButton>
+            <EditorTabButton active={tab === "preview"} onClick={() => setTab("preview")}>
               Preview
-            </TabButton>
+            </EditorTabButton>
             {optimizedPrompt !== null && (
-              <TabButton active={tab === "optimized"} onClick={() => setTab("optimized")}>
+              <EditorTabButton active={tab === "optimized"} onClick={() => setTab("optimized")}>
                 Optimized
-              </TabButton>
+              </EditorTabButton>
             )}
           </div>
         )}
         <div className="flex items-center gap-2">
           {canOptimize && (
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-xs"
-                    className="text-white/60 hover:bg-white/10 hover:text-white"
-                    onClick={handleOptimize}
-                    disabled={isOptimizing}
-                  >
-                    {isOptimizing ? (
-                      <Loader2 className="animate-spin" />
-                    ) : !isPro ? (
-                      <Crown />
-                    ) : (
-                      <Sparkles />
-                    )}
-                  </Button>
-                }
-              />
-              {!isPro && <TooltipContent>AI features require Pro subscription</TooltipContent>}
-            </Tooltip>
+            <AiActionButton isPro={isPro} isLoading={isOptimizing} onClick={handleOptimize} />
           )}
           <Button
             type="button"
             variant="ghost"
             size="icon-xs"
             className="text-white/60 hover:bg-white/10 hover:text-white"
-            onClick={handleCopy}
+            onClick={() => copy(value)}
           >
             {copied ? <Check className="text-emerald-400" /> : <Copy />}
           </Button>
@@ -193,30 +167,5 @@ export function MarkdownEditor({
         )}
       </div>
     </div>
-  );
-}
-
-function TabButton({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "rounded-md px-2 py-1 text-xs font-medium transition-colors",
-        active
-          ? "bg-white/10 text-white"
-          : "text-white/50 hover:text-white/80"
-      )}
-    >
-      {children}
-    </button>
   );
 }

@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { ItemEditForm, type ItemEditFormState } from "@/components/dashboard/ItemEditForm";
 import { ItemDetailView } from "@/components/dashboard/ItemDetailView";
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { ITEM_TYPE_ICONS, ITEM_TYPE_LABELS } from "@/lib/constants/item-types";
 import type { ItemDetail } from "@/lib/db/items";
 import type { CollectionOption } from "@/lib/db/collections";
@@ -60,7 +61,7 @@ export function ItemDrawer({ itemId, open, onOpenChange }: ItemDrawerProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [editingForItemId, setEditingForItemId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const { copied, copy } = useCopyToClipboard();
   const [allCollections, setAllCollections] = useState<CollectionOption[]>([]);
   const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
   const [isTogglingPin, setIsTogglingPin] = useState(false);
@@ -115,9 +116,7 @@ export function ItemDrawer({ itemId, open, onOpenChange }: ItemDrawerProps) {
       return;
     }
     try {
-      await navigator.clipboard.writeText(value);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
+      await copy(value);
     } catch {
       toast.error("Failed to copy");
     }

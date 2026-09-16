@@ -9,7 +9,8 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
+import { GitHubSignInButton } from "@/components/auth/GitHubSignInButton";
+import { postJson } from "@/lib/api-client";
 
 export function SignInForm() {
   const searchParams = useSearchParams();
@@ -20,7 +21,6 @@ export function SignInForm() {
   const [error, setError] = useState<string | null>(null);
   const [needsVerification, setNeedsVerification] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isGitHubLoading, setIsGitHubLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
 
   useEffect(() => {
@@ -69,15 +69,10 @@ export function SignInForm() {
 
   async function handleResendVerification() {
     setIsResending(true);
-    const res = await fetch("/api/auth/resend-verification", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
-    });
+    const { status, json } = await postJson("/api/auth/resend-verification", { email });
     setIsResending(false);
 
-    if (res.status === 429) {
-      const json = await res.json();
+    if (status === 429) {
       toast.error(json.error ?? "Too many attempts. Please try again later.");
       return;
     }
@@ -85,28 +80,9 @@ export function SignInForm() {
     toast.success("If that account needs verification, a new email is on its way.");
   }
 
-  async function handleGitHubSignIn() {
-    setIsGitHubLoading(true);
-    await signIn("github", { redirectTo: callbackUrl });
-  }
-
   return (
     <div className="flex flex-col gap-4">
-      <Button
-        type="button"
-        variant="outline"
-        className="w-full"
-        onClick={handleGitHubSignIn}
-        disabled={isGitHubLoading}
-      >
-        {isGitHubLoading ? "Redirecting..." : "Sign in with GitHub"}
-      </Button>
-
-      <div className="flex items-center gap-3">
-        <Separator className="flex-1" />
-        <span className="text-xs text-muted-foreground">OR</span>
-        <Separator className="flex-1" />
-      </div>
+      <GitHubSignInButton redirectTo={callbackUrl} />
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="flex flex-col gap-1.5">

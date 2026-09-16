@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { signIn } from "next-auth/react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
+import { GitHubSignInButton } from "@/components/auth/GitHubSignInButton";
+import { postJson } from "@/lib/api-client";
 
 const registerSchema = z
   .object({
@@ -31,12 +31,6 @@ export function RegisterForm() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isGitHubLoading, setIsGitHubLoading] = useState(false);
-
-  async function handleGitHubSignIn() {
-    setIsGitHubLoading(true);
-    await signIn("github", { redirectTo: "/dashboard" });
-  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -50,12 +44,7 @@ export function RegisterForm() {
 
     setIsSubmitting(true);
 
-    const res = await fetch("/api/auth/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(parsed.data),
-    });
-    const json = await res.json();
+    const { json } = await postJson("/api/auth/register", parsed.data);
 
     setIsSubmitting(false);
 
@@ -70,21 +59,7 @@ export function RegisterForm() {
 
   return (
     <div className="flex flex-col gap-4">
-      <Button
-        type="button"
-        variant="outline"
-        className="w-full"
-        onClick={handleGitHubSignIn}
-        disabled={isGitHubLoading}
-      >
-        {isGitHubLoading ? "Redirecting..." : "Sign in with GitHub"}
-      </Button>
-
-      <div className="flex items-center gap-3">
-        <Separator className="flex-1" />
-        <span className="text-xs text-muted-foreground">OR</span>
-        <Separator className="flex-1" />
-      </div>
+      <GitHubSignInButton redirectTo="/dashboard" />
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="flex flex-col gap-1.5">

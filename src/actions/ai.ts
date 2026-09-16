@@ -1,11 +1,9 @@
 "use server";
 
 import { z } from "zod";
-import { headers } from "next/headers";
 import OpenAI from "openai";
-import { auth } from "@/auth";
+import { requireSession, requireProAiAccess } from "@/lib/auth-helpers";
 import { openai, AI_MODEL } from "@/lib/openai";
-import { checkRateLimit } from "@/lib/rate-limit";
 
 interface ActionResult<T> {
   success: boolean;
@@ -15,14 +13,6 @@ interface ActionResult<T> {
 
 const MAX_CONTENT_LENGTH = 2000;
 const MAX_SUGGESTED_TAGS = 5;
-
-function getClientIpFromHeaders(headerList: Awaited<ReturnType<typeof headers>>): string {
-  const forwardedFor = headerList.get("x-forwarded-for");
-  if (forwardedFor) {
-    return forwardedFor.split(",")[0].trim();
-  }
-  return headerList.get("x-real-ip") ?? "unknown";
-}
 
 const generateAutoTagsSchema = z.object({
   title: z.string().trim().min(1, "Title is required"),
@@ -91,19 +81,14 @@ export async function summarizeItem(
     return { success: false, error: parsed.error.issues[0].message };
   }
 
-  const session = await auth();
-  if (!session?.user) {
-    return { success: false, error: "Unauthorized" };
+  const { session, error } = await requireSession();
+  if (!session) {
+    return { success: false, error };
   }
 
-  if (!session.user.isPro) {
-    return { success: false, error: "AI features require DevDrop Pro" };
-  }
-
-  const ip = getClientIpFromHeaders(await headers());
-  const rateLimit = await checkRateLimit("ai-summarize", `${ip}:${session.user.id}`);
-  if (!rateLimit.success) {
-    return { success: false, error: "Too many AI requests. Please try again shortly." };
+  const { error: proError } = await requireProAiAccess(session, "ai-summarize");
+  if (proError) {
+    return { success: false, error: proError };
   }
 
   const { title, content, url } = parsed.data;
@@ -179,19 +164,14 @@ export async function explainCode(
     return { success: false, error: parsed.error.issues[0].message };
   }
 
-  const session = await auth();
-  if (!session?.user) {
-    return { success: false, error: "Unauthorized" };
+  const { session, error } = await requireSession();
+  if (!session) {
+    return { success: false, error };
   }
 
-  if (!session.user.isPro) {
-    return { success: false, error: "AI features require DevDrop Pro" };
-  }
-
-  const ip = getClientIpFromHeaders(await headers());
-  const rateLimit = await checkRateLimit("ai-explain", `${ip}:${session.user.id}`);
-  if (!rateLimit.success) {
-    return { success: false, error: "Too many AI requests. Please try again shortly." };
+  const { error: proError } = await requireProAiAccess(session, "ai-explain");
+  if (proError) {
+    return { success: false, error: proError };
   }
 
   const { title, content, language } = parsed.data;
@@ -266,19 +246,14 @@ export async function optimizePrompt(
     return { success: false, error: parsed.error.issues[0].message };
   }
 
-  const session = await auth();
-  if (!session?.user) {
-    return { success: false, error: "Unauthorized" };
+  const { session, error } = await requireSession();
+  if (!session) {
+    return { success: false, error };
   }
 
-  if (!session.user.isPro) {
-    return { success: false, error: "AI features require DevDrop Pro" };
-  }
-
-  const ip = getClientIpFromHeaders(await headers());
-  const rateLimit = await checkRateLimit("ai-optimize-prompt", `${ip}:${session.user.id}`);
-  if (!rateLimit.success) {
-    return { success: false, error: "Too many AI requests. Please try again shortly." };
+  const { error: proError } = await requireProAiAccess(session, "ai-optimize-prompt");
+  if (proError) {
+    return { success: false, error: proError };
   }
 
   const { title, content } = parsed.data;
@@ -320,19 +295,14 @@ export async function generateAutoTags(
     return { success: false, error: parsed.error.issues[0].message };
   }
 
-  const session = await auth();
-  if (!session?.user) {
-    return { success: false, error: "Unauthorized" };
+  const { session, error } = await requireSession();
+  if (!session) {
+    return { success: false, error };
   }
 
-  if (!session.user.isPro) {
-    return { success: false, error: "AI features require DevDrop Pro" };
-  }
-
-  const ip = getClientIpFromHeaders(await headers());
-  const rateLimit = await checkRateLimit("ai-suggest-tags", `${ip}:${session.user.id}`);
-  if (!rateLimit.success) {
-    return { success: false, error: "Too many AI requests. Please try again shortly." };
+  const { error: proError } = await requireProAiAccess(session, "ai-suggest-tags");
+  if (proError) {
+    return { success: false, error: proError };
   }
 
   const { title, content } = parsed.data;
